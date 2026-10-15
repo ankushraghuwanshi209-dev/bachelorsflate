@@ -21,7 +21,6 @@ import {
   GraduationCap,
   Sparkles,
   DollarSign,
-  User
 } from 'lucide-react';
 import type { RoomListing, BookingRequest, RoomStatus, BathroomType } from '../types';
 import { getHostRooms, createRoom, updateRoom, deleteRoom } from '../services/roomService';
@@ -55,7 +54,7 @@ export const HostDashboardPage: React.FC<HostDashboardPageProps> = ({
   onNavigateToRoom,
   onNavigate,
 }) => {
-  const { user, activeRole, setActiveRole, updateProfile } = useAuth();
+  const { user, activeRole } = useAuth();
   const { success, error, info } = useToast();
 
   const [activeTab, setActiveTab] = useState<'listings' | 'requests' | 'form'>(
@@ -347,23 +346,10 @@ export const HostDashboardPage: React.FC<HostDashboardPageProps> = ({
         <div className="space-y-2">
           <h2 className="text-2xl font-extrabold text-slate-900">Aap abhi Traveller Mode me hain</h2>
           <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
-            "Add Room" aur room listing options sirf <strong>Host Mode</strong> me available hain. Room list karne ke liye neeche button se Host Mode me switch karein.
+            "Add Room" aur room listing options sirf <strong>Host Mode</strong> me available hain. Host Mode activate karne ke liye top navigation ka mode switch use karein.
           </p>
         </div>
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
-          <button
-            onClick={async () => {
-              if (!user.roles.includes('host')) {
-                await updateProfile({ roles: ['traveller', 'host'] });
-              }
-              setActiveRole('host');
-              success('Switched to Host Mode! You can now add and manage rooms.');
-            }}
-            className="w-full sm:w-auto px-6 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold shadow transition-all flex items-center justify-center gap-2"
-          >
-            <Layers className="w-4 h-4" />
-            Switch to Host Mode (Unlock Add Room)
-          </button>
+        <div className="flex justify-center pt-2">
           <button
             onClick={() => onNavigate?.('traveller-dashboard')}
             className="w-full sm:w-auto px-6 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition-all"
@@ -377,34 +363,6 @@ export const HostDashboardPage: React.FC<HostDashboardPageProps> = ({
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-      {/* Mode Switcher Pill */}
-      <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-3 rounded-2xl border border-slate-200 shadow-sm">
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-bold text-slate-500">Dashboard Mode:</span>
-          <div className="inline-flex items-center p-1 bg-slate-100 rounded-xl border border-slate-200">
-            <button
-              type="button"
-              onClick={() => {
-                setActiveRole('traveller');
-                onNavigate?.('traveller-dashboard');
-              }}
-              className="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-white/60 flex items-center gap-1.5 transition-all"
-            >
-              <User className="w-3.5 h-3.5 text-brand-600" />
-              Switch to Traveller Mode
-            </button>
-            <span className="px-3 py-1.5 rounded-lg text-xs font-bold bg-purple-600 text-white shadow-sm flex items-center gap-1.5">
-              <Layers className="w-3.5 h-3.5" />
-              Host Mode (Active)
-            </span>
-          </div>
-        </div>
-
-        <span className="text-[11px] text-purple-700 font-semibold bg-purple-50 px-2.5 py-1 rounded-full border border-purple-100">
-          ✓ Host Mode Active — Add Room unlocked
-        </span>
-      </div>
-
       {/* Top Banner & Tab Navigation */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-200">
         <div>
