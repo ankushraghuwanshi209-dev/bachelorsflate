@@ -382,27 +382,52 @@ export const RoomDetailsPage: React.FC<RoomDetailsPageProps> = ({
         <div className="lg:col-span-4 sticky top-24">
           <div className="bg-white rounded-3xl border border-slate-200 shadow-xl shadow-slate-100 p-6 space-y-6">
             <div>
-              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Transparent Slot Rates</span>
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Available Slot Rates</span>
               <div className="mt-2 space-y-2">
-                <div className="flex items-baseline justify-between p-3 rounded-2xl bg-teal-50/60 border border-teal-100">
-                  <div>
-                    <p className="font-bold text-xs text-slate-900">2–3 Hours</p>
-                    <p className="text-[10px] text-slate-500">Power nap & freshen up</p>
+                {room.availableDurations?.includes(1) && (
+                  <div className="flex items-baseline justify-between p-3 rounded-2xl bg-teal-50/60 border border-teal-100">
+                    <div>
+                      <p className="font-bold text-xs text-slate-900">1 Hour</p>
+                      <p className="text-[10px] text-slate-500">Quick freshen up & nap</p>
+                    </div>
+                    <span className="text-lg font-black text-teal-800">
+                      ₹{room.pricing.hourly || Math.round(room.pricing.twoToThreeHours / 2)}
+                    </span>
                   </div>
-                  <span className="text-lg font-black text-teal-800">₹{room.pricing.twoToThreeHours}</span>
-                </div>
+                )}
 
+                {room.availableDurations?.includes(2) && (
+                  <div className="flex items-baseline justify-between p-3 rounded-2xl bg-teal-50/60 border border-teal-100">
+                    <div>
+                      <p className="font-bold text-xs text-slate-900">2 Hours</p>
+                      <p className="text-[10px] text-slate-500">Power nap & revision</p>
+                    </div>
+                    <span className="text-lg font-black text-teal-800">
+                      ₹{Math.round(room.pricing.twoToThreeHours * 0.85)}
+                    </span>
+                  </div>
+                )}
+
+                {(!room.availableDurations || room.availableDurations.includes(3)) && (
+                  <div className="flex items-baseline justify-between p-3 rounded-2xl bg-teal-50/60 border border-teal-100">
+                    <div>
+                      <p className="font-bold text-xs text-slate-900">3 Hours</p>
+                      <p className="text-[10px] text-slate-500">Pre-exam deep rest</p>
+                    </div>
+                    <span className="text-lg font-black text-teal-800">₹{room.pricing.twoToThreeHours}</span>
+                  </div>
+                )}
               </div>
             </div>
 
             <div className="space-y-2 text-xs text-slate-600 pt-2 border-t border-slate-100">
               <div className="flex justify-between">
-                <span className="text-slate-500">Available Times:</span>
-                <span className="font-bold text-slate-900">{room.availableTimes}</span>
+                <span className="text-slate-500">Candidate Allowance:</span>
+                <span className="font-bold text-slate-900">Up to {room.candidateAllowance} {room.candidateAllowance === 1 ? 'guest' : 'guests'}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">Min / Max Stay:</span>
-                <span className="font-bold text-slate-900">{room.minStayHours}h – {room.maxStayHours}h</span>
+                <span className="text-slate-500">Available Times:</span>
+                <span className="font-bold text-slate-900">{room.availableTimes}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-500">Direct Payment:</span>
@@ -410,13 +435,31 @@ export const RoomDetailsPage: React.FC<RoomDetailsPageProps> = ({
               </div>
             </div>
 
-            <button
-              onClick={() => setShowBookingModal(true)}
-              className="w-full py-3.5 px-4 bg-brand-600 hover:bg-brand-700 text-white rounded-2xl font-bold text-sm shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2"
-            >
-              <Calendar className="w-4 h-4" />
-              <span>Request to Book Room</span>
-            </button>
+            {isHostOwner ? (
+              <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-center space-y-2">
+                <div className="w-8 h-8 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center mx-auto">
+                  <ShieldCheck className="w-4 h-4" />
+                </div>
+                <p className="font-bold text-xs text-amber-900">Your Room Listing</p>
+                <p className="text-[11px] text-amber-800 leading-relaxed">
+                  You are the host of this room. Booking requests cannot be submitted for your own listings.
+                </p>
+                <button
+                  disabled
+                  className="w-full py-2.5 px-4 bg-slate-200 text-slate-500 rounded-xl text-xs font-bold cursor-not-allowed"
+                >
+                  Booking Disabled for Owner
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setShowBookingModal(true)}
+                className="w-full py-3.5 px-4 bg-brand-600 hover:bg-brand-700 text-white rounded-2xl font-bold text-sm shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2"
+              >
+                <Calendar className="w-4 h-4" />
+                <span>Request to Book Room</span>
+              </button>
+            )}
 
             <div className="flex items-center justify-center gap-1.5 text-[11px] text-slate-400 text-center">
               <ShieldCheck className="w-3.5 h-3.5 text-teal-600" />
@@ -431,17 +474,27 @@ export const RoomDetailsPage: React.FC<RoomDetailsPageProps> = ({
         <div>
           <span className="text-[10px] text-slate-400 block font-bold uppercase tracking-wider">Starting at</span>
           <div className="flex items-baseline gap-1">
-            <span className="text-lg font-black text-teal-800">₹{room.pricing.twoToThreeHours}</span>
-            <span className="text-xs text-slate-500 font-semibold">/ 2–3 hrs</span>
+            <span className="text-lg font-black text-teal-800">
+              ₹{room.availableDurations?.includes(1) ? (room.pricing.hourly || Math.round(room.pricing.twoToThreeHours / 2)) : room.pricing.twoToThreeHours}
+            </span>
+            <span className="text-xs text-slate-500 font-semibold">
+              / {room.availableDurations?.includes(1) ? '1 hr' : '2–3 hrs'}
+            </span>
           </div>
         </div>
-        <button
-          onClick={() => setShowBookingModal(true)}
-          className="py-2.5 px-5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold shadow-md transition-all flex items-center gap-1.5"
-        >
-          <Calendar className="w-4 h-4" />
-          <span>Request to Book</span>
-        </button>
+        {isHostOwner ? (
+          <span className="text-[11px] font-bold text-amber-800 bg-amber-50 border border-amber-200 px-3 py-2 rounded-xl">
+            Your Listing
+          </span>
+        ) : (
+          <button
+            onClick={() => setShowBookingModal(true)}
+            className="py-2.5 px-5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold shadow-md transition-all flex items-center gap-1.5"
+          >
+            <Calendar className="w-4 h-4" />
+            <span>Request to Book</span>
+          </button>
+        )}
       </div>
 
       {/* Booking Modal */}

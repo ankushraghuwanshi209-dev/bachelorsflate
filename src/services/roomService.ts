@@ -8,6 +8,10 @@ export function sanitizePublicRoom(room: RoomListing): RoomListing {
   return {
     ...publicRoom,
     candidateAllowance: Number(room.candidateAllowance) || 1,
+    availableDurations:
+      Array.isArray(room.availableDurations) && room.availableDurations.length > 0
+        ? room.availableDurations
+        : [1, 2, 3],
     approxLocation: '',
     nearbyLandmark: '',
   };
@@ -19,6 +23,10 @@ function normalizeLocalRoom(room: RoomListing): RoomListing {
   return {
     ...publicRoom,
     candidateAllowance: Number(room.candidateAllowance) || 1,
+    availableDurations:
+      Array.isArray(room.availableDurations) && room.availableDurations.length > 0
+        ? room.availableDurations
+        : [1, 2, 3],
     privateDetails: room.privateDetails || {
       exactAddress: exactAddress || '',
       checkInInstructions: checkInInstructions || '',
@@ -44,6 +52,10 @@ function rowToRoom(
     city: row.city,
     neighbourhood: row.neighbourhood,
     candidateAllowance: Number(row.candidate_allowance) || 1,
+    availableDurations:
+      Array.isArray(row.available_durations) && row.available_durations.length > 0
+        ? row.available_durations.map(Number)
+        : [1, 2, 3],
     approxLocation: row.approx_location,
     amenities: row.amenities || [],
     bathroomType: row.bathroom_type || 'attached',
@@ -155,9 +167,25 @@ export async function getPublicRooms(filters?: Partial<SearchFilters>): Promise<
   let filtered = rooms.filter((r) => r.status === 'active');
 
   if (filters) {
-    if (filters.city && filters.city.trim() !== '' && filters.city !== 'All Cities') {
+    if (filters.query && filters.query.trim() !== '') {
+      const q = filters.query.toLowerCase().trim();
+      filtered = filtered.filter(
+        (r) =>
+          r.city.toLowerCase().includes(q) ||
+          r.neighbourhood.toLowerCase().includes(q) ||
+          r.title.toLowerCase().includes(q) ||
+          r.approxLocation.toLowerCase().includes(q) ||
+          r.nearbyLandmark.toLowerCase().includes(q)
+      );
+    } else if (filters.city && filters.city.trim() !== '' && filters.city !== 'All Cities') {
       const searchCity = filters.city.toLowerCase().trim();
-      filtered = filtered.filter((r) => r.city.toLowerCase().includes(searchCity));
+      filtered = filtered.filter(
+        (r) =>
+          r.city.toLowerCase().includes(searchCity) ||
+          r.neighbourhood.toLowerCase().includes(searchCity) ||
+          r.approxLocation.toLowerCase().includes(searchCity) ||
+          r.nearbyLandmark.toLowerCase().includes(searchCity)
+      );
     }
 
     if (filters.neighbourhood && filters.neighbourhood.trim() !== '') {
@@ -167,6 +195,24 @@ export async function getPublicRooms(filters?: Partial<SearchFilters>): Promise<
           r.neighbourhood.toLowerCase().includes(searchNeighbourhood) ||
           r.approxLocation.toLowerCase().includes(searchNeighbourhood)
       );
+    }
+
+    if (filters.duration && filters.duration !== 'any') {
+      const targetHours =
+        filters.duration === '1_hour'
+          ? 1
+          : filters.duration === '2_hours'
+          ? 2
+          : 3;
+      filtered = filtered.filter((r) =>
+        Array.isArray(r.availableDurations) && r.availableDurations.length > 0
+          ? r.availableDurations.includes(targetHours)
+          : true
+      );
+    }
+
+    if (filters.guestCount && filters.guestCount > 0) {
+      filtered = filtered.filter((r) => (r.candidateAllowance || 1) >= (filters.guestCount as number));
     }
 
     if (filters.bathroomType && filters.bathroomType !== 'any') {
@@ -324,6 +370,14 @@ export async function createRoom(
   const newId = 'room-' + Date.now().toString(36) + '-' + Math.random().toString(36).substring(2, 6);
   const now = new Date().toISOString();
 
+  const rawDurations =
+    Array.isArray(data.availableDurations) && data.availableDurations.length > 0
+      ? data.availableDurations.filter((d) => [1, 2, 3].includes(d))
+      : [1, 2, 3];
+  if (rawDurations.length === 0) {
+    throw new Error('Please select at least one available duration (1, 2, or 3 hours).');
+  }
+
   const newRoom: RoomListing = {
     ...data,
     id: newId,
@@ -334,6 +388,7 @@ export async function createRoom(
     reviewCount: 0,
     status: data.status || 'active',
     isDemo: false,
+    availableDurations: rawDurations.sort(),
     termsAgreed: true,
     termsAgreedAt: data.termsAgreedAt || now,
     termsVersion: data.termsVersion || '2026-10-v1',
@@ -355,6 +410,7 @@ export async function createRoom(
         city: newRoom.city,
         neighbourhood: newRoom.neighbourhood,
         candidate_allowance: newRoom.candidateAllowance,
+        available_durations: newRoom.availableDurations,
         approx_location: newRoom.approxLocation,
         amenities: newRoom.amenities,
         bathroom_type: newRoom.bathroomType,
@@ -375,8 +431,11 @@ export async function createRoom(
       };
 
       let { error: roomErr } = await supabase.from('rooms').insert(roomRow);
-      if (roomErr && roomErr.message?.includes('terms_agreed')) {
-        const { terms_agreed, terms_agreed_at, terms_version, ...fallbackRow } = roomRow;
+      if (
+        roomErr &&
+        (roomErr.message?.includes('available_durations') || roomErr.message?.includes('terms_agreed'))
+      ) {
+        const { available_durations, terms_agreed, terms_agreed_at, terms_version, ...fallbackRow } = roomRow;
         const retry = await supabase.from('rooms').insert(fallbackRow);
         roomErr = retry.error;
       }
@@ -443,6 +502,9 @@ export async function updateRoom(
       if (updates.availableTimes !== undefined) roomRowUpdates.available_times = updates.availableTimes;
       if (updates.photos !== undefined) roomRowUpdates.photos = updates.photos;
       if (updates.status !== undefined) roomRowUpdates.status = updates.status;
+      if (updates.availableDurations !== undefined) {
+        roomRowUpdates.available_durations = updates.availableDurations;
+      }
       if (updates.termsAgreed !== undefined) roomRowUpdates.terms_agreed = updates.termsAgreed;
       if (updates.termsAgreedAt !== undefined) roomRowUpdates.terms_agreed_at = updates.termsAgreedAt;
       if (updates.termsVersion !== undefined) roomRowUpdates.terms_version = updates.termsVersion;
@@ -450,8 +512,11 @@ export async function updateRoom(
       try {
         await supabase.from('rooms').update(roomRowUpdates).eq('id', roomId);
       } catch (updErr: any) {
-        if (updErr?.message?.includes('terms_agreed')) {
-          const { terms_agreed, terms_agreed_at, terms_version, ...fallbackUpdates } = roomRowUpdates;
+        if (
+          updErr?.message?.includes('terms_agreed') ||
+          updErr?.message?.includes('available_durations')
+        ) {
+          const { available_durations, terms_agreed, terms_agreed_at, terms_version, ...fallbackUpdates } = roomRowUpdates;
           await supabase.from('rooms').update(fallbackUpdates).eq('id', roomId);
         } else {
           throw updErr;

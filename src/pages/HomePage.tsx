@@ -68,17 +68,38 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate, onSelectRoom }) 
 
     setIsDetectingLocation(true);
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setIsDetectingLocation(false);
-        // Default to nearest city based on demo or prompt
+      async (pos) => {
+        try {
+          const { latitude, longitude } = pos.coords;
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
+          );
+          if (res.ok) {
+            const data = await res.json();
+            const detected =
+              data.address?.city ||
+              data.address?.town ||
+              data.address?.suburb ||
+              data.address?.state_district;
+            if (detected) {
+              setSearchCity(detected);
+              info(`Location detected: ${detected}. Rooms updated.`);
+              setIsDetectingLocation(false);
+              return;
+            }
+          }
+        } catch {
+          // Fallback if reverse geocode service fails
+        }
         setSearchCity('New Delhi');
         info('Location detected near New Delhi. You can refine or change this anytime.');
+        setIsDetectingLocation(false);
       },
       (err) => {
         setIsDetectingLocation(false);
-        info('Location permission was denied or unavailable. Manual city search is ready.');
+        info('Location permission was denied or unavailable. You can search any city manually.');
       },
-      { timeout: 8000 }
+      { timeout: 8000, enableHighAccuracy: false }
     );
   };
 

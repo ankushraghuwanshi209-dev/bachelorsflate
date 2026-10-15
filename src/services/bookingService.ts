@@ -145,11 +145,30 @@ export async function createBooking(
   }
 
   const room = await getRoomById(requestData.roomId);
-  if (room && requestData.guestCount > room.candidateAllowance) {
+  if (!room) {
+    throw new Error('Room listing not found.');
+  }
+
+  const callerUid = traveller?.uid || requestData.travellerId;
+  if (room.hostId === callerUid) {
+    throw new Error('Hosts cannot submit booking requests for their own room listings.');
+  }
+
+  if (requestData.guestCount > room.candidateAllowance) {
     throw new Error(
       `This booking request exceeds the host's candidate allowance (${room.candidateAllowance} ${
         room.candidateAllowance === 1 ? 'candidate' : 'candidates'
       } maximum).`
+    );
+  }
+
+  if (
+    Array.isArray(room.availableDurations) &&
+    room.availableDurations.length > 0 &&
+    !room.availableDurations.includes(requestData.durationHours)
+  ) {
+    throw new Error(
+      `The host does not offer a ${requestData.durationHours}-hour stay for this room.`
     );
   }
 

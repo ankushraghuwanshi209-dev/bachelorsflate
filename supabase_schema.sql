@@ -44,6 +44,7 @@ CREATE TABLE IF NOT EXISTS public.rooms (
   city TEXT NOT NULL,
   neighbourhood TEXT NOT NULL,
   candidate_allowance INTEGER NOT NULL DEFAULT 1 CHECK (candidate_allowance > 0),
+  available_durations INTEGER[] NOT NULL DEFAULT '{1, 2, 3}',
   approx_location TEXT NOT NULL,
   amenities TEXT[] DEFAULT ARRAY[]::TEXT[],
   bathroom_type TEXT DEFAULT 'attached',
@@ -62,9 +63,10 @@ CREATE TABLE IF NOT EXISTS public.rooms (
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
--- Ensure candidate_allowance and terms columns exist on existing tables
+-- Ensure candidate_allowance, available_durations, and terms columns exist on existing tables
 ALTER TABLE public.rooms
   ADD COLUMN IF NOT EXISTS candidate_allowance INTEGER NOT NULL DEFAULT 1,
+  ADD COLUMN IF NOT EXISTS available_durations INTEGER[] NOT NULL DEFAULT '{1, 2, 3}',
   ADD COLUMN IF NOT EXISTS terms_agreed BOOLEAN NOT NULL DEFAULT true,
   ADD COLUMN IF NOT EXISTS terms_agreed_at TIMESTAMPTZ DEFAULT NOW(),
   ADD COLUMN IF NOT EXISTS terms_version TEXT DEFAULT '2026-10-v1';
@@ -82,6 +84,7 @@ BEGIN
 END $$;
 
 COMMENT ON COLUMN public.rooms.candidate_allowance IS 'Maximum number of exam candidates/travellers allowed to stay in the room simultaneously.';
+COMMENT ON COLUMN public.rooms.available_durations IS 'Array of booking durations in hours (1, 2, and/or 3) offered by host.';
 COMMENT ON COLUMN public.rooms.terms_agreed IS 'Whether host confirmed authorization, accuracy, legal compliance, and non-discrimination.';
 
 
@@ -281,7 +284,11 @@ CREATE POLICY "Hosts and travellers can read their bookings" ON public.bookings
 
 DROP POLICY IF EXISTS "Travellers can create bookings" ON public.bookings;
 CREATE POLICY "Travellers can create bookings" ON public.bookings
-  FOR INSERT TO authenticated WITH CHECK (auth.uid() = traveller_id AND status = 'pending');
+  FOR INSERT TO authenticated WITH CHECK (
+    auth.uid() = traveller_id 
+    AND status = 'pending' 
+    AND auth.uid() <> host_id
+  );
 
 DROP POLICY IF EXISTS "Parties can update their bookings" ON public.bookings;
 CREATE POLICY "Parties can update their bookings" ON public.bookings

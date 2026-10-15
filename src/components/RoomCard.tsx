@@ -106,20 +106,33 @@ export const RoomCard: React.FC<RoomCardProps> = ({ room, onSelect }) => {
           </h3>
 
           {/* Amenities & Bathroom Badge */}
-          <div className="flex flex-wrap items-center gap-1.5 mb-4 text-xs text-slate-600">
+          <div className="flex flex-wrap items-center gap-1.5 mb-2.5 text-xs text-slate-600">
             <span className="bg-teal-50 text-teal-800 font-medium px-2 py-0.5 rounded-md text-[11px] border border-teal-100">
               {room.bathroomType === 'attached' ? 'Attached Bath' : 'Bathroom Access'}
             </span>
-            {room.amenities.slice(0, 3).map((amenity, idx) => (
+            <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded-md text-[11px] font-semibold">
+              Up to {room.candidateAllowance} {room.candidateAllowance === 1 ? 'Guest' : 'Guests'}
+            </span>
+            {room.amenities.slice(0, 2).map((amenity, idx) => (
               <span key={idx} className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded-md text-[11px]">
                 {amenity}
               </span>
             ))}
-            {room.amenities.length > 3 && (
-              <span className="text-[11px] text-slate-400 font-medium">
-                +{room.amenities.length - 3} more
-              </span>
-            )}
+          </div>
+
+          {/* Enabled Duration Options */}
+          <div className="flex items-center gap-1.5 mb-3 text-xs">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Durations:</span>
+            <div className="flex items-center gap-1">
+              {(room.availableDurations && room.availableDurations.length > 0 ? room.availableDurations : [1, 2, 3]).map((d) => (
+                <span
+                  key={d}
+                  className="bg-brand-50 text-brand-700 border border-brand-200/60 text-[10px] font-bold px-1.5 py-0.5 rounded"
+                >
+                  {d}h
+                </span>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -128,9 +141,13 @@ export const RoomCard: React.FC<RoomCardProps> = ({ room, onSelect }) => {
           <div>
             <div className="flex items-baseline gap-1">
               <span className="text-base font-extrabold text-slate-900">
-                ₹{room.pricing.twoToThreeHours}
+                ₹{room.availableDurations?.includes(1) && room.pricing.hourly
+                  ? room.pricing.hourly
+                  : room.pricing.twoToThreeHours}
               </span>
-              <span className="text-xs text-slate-500 font-medium">/ 2–3 hrs</span>
+              <span className="text-xs text-slate-500 font-medium">
+                {room.availableDurations?.includes(1) && room.pricing.hourly ? '/ 1 hr' : '/ 2–3 hrs'}
+              </span>
             </div>
             <div className="flex items-center gap-1 text-[11px] text-slate-400 mt-0.5">
               <Clock className="w-3 h-3 text-slate-400" />

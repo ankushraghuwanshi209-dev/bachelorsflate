@@ -246,7 +246,9 @@ export const TravellerDashboardPage: React.FC<TravellerDashboardPageProps> = ({
 
                     <div className="bg-slate-50 p-3 rounded-2xl">
                       <p className="text-slate-400 font-medium text-[11px]">Guest Count</p>
-                      <p className="font-bold text-slate-900 mt-0.5">{b.guestCount} Guest</p>
+                      <p className="font-bold text-slate-900 mt-0.5">
+                        {b.guestCount} {b.guestCount === 1 ? 'Guest' : 'Guests'}
+                      </p>
                     </div>
 
                     <div className="bg-teal-50/70 p-3 rounded-2xl border border-teal-100">
@@ -305,7 +307,7 @@ export const TravellerDashboardPage: React.FC<TravellerDashboardPageProps> = ({
                         <div className="space-y-0.5">
                           <p className="font-bold text-teal-900">In-Person Physical ID Verification Reminder</p>
                           <p className="text-[11px] leading-relaxed text-teal-800">
-                            Please carry a valid physical government-issued photo ID (Aadhaar, Voter ID, Passport, or Driving License) to present directly to the host upon check-in. To safeguard privacy, no ID photos or numbers are collected online.
+                            Please carry a valid physical government-issued photo ID (Aadhaar, Voter ID, Passport, or Driving License) for <strong>every adult traveller in your group ({b.guestCount} {b.guestCount === 1 ? 'person' : 'people'})</strong> to present directly to host {b.hostName} upon check-in. To safeguard privacy, no ID photos or numbers are collected online.
                           </p>
                         </div>
                       </div>

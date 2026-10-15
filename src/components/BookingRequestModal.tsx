@@ -37,7 +37,18 @@ export const BookingRequestModal: React.FC<BookingRequestModalProps> = ({
     return today.toISOString().split('T')[0];
   });
   const [startTime, setStartTime] = useState('09:00');
-  const duration: StayDurationType = '2-3_hours';
+
+  // Durations enabled by host
+  const enabledDurations = (
+    room.availableDurations && room.availableDurations.length > 0
+      ? room.availableDurations
+      : [1, 2, 3]
+  ).filter((d) => [1, 2, 3].includes(d));
+
+  const [selectedHours, setSelectedHours] = useState<number>(() => {
+    return enabledDurations[0] || 1;
+  });
+
   const [guestCount, setGuestCount] = useState(1);
   const [message, setMessage] = useState('');
   const [travellerPhone, setTravellerPhone] = useState(user?.phoneNumber || '');
@@ -48,6 +59,29 @@ export const BookingRequestModal: React.FC<BookingRequestModalProps> = ({
   const [agreedToRules, setAgreedToRules] = useState(false);
   const [agreedToConduct, setAgreedToConduct] = useState(false);
   const [agreedToIdVerification, setAgreedToIdVerification] = useState(false);
+
+  // Prevent host from booking own room
+  if (user && user.uid === room.hostId) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm animate-fade-in">
+        <div className="bg-white rounded-2xl max-w-md w-full p-6 text-center shadow-xl">
+          <div className="w-12 h-12 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center mx-auto mb-4">
+            <AlertCircle className="w-6 h-6" />
+          </div>
+          <h3 className="text-lg font-bold text-slate-900 mb-2">Host Cannot Book Own Room</h3>
+          <p className="text-xs text-slate-600 mb-6 leading-relaxed">
+            You are logged in as the host of this room listing (<strong>{room.title}</strong>). Hosts cannot send booking requests for their own properties.
+          </p>
+          <button
+            onClick={onClose}
+            className="w-full py-2.5 text-xs font-semibold text-slate-700 bg-slate-100 rounded-xl hover:bg-slate-200 transition-colors"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (!user) {
     return (
@@ -82,12 +116,46 @@ export const BookingRequestModal: React.FC<BookingRequestModalProps> = ({
     );
   }
 
-  // Price & duration calculations
-  const durationHours = 3;
-  const calculatedPrice = room.pricing.twoToThreeHours;
+  // Calculate pricing based on selected hours
+  const getDurationDetails = (hours: number): { duration: StayDurationType; durationHours: number; price: number; label: string; desc: string } => {
+    if (hours === 1) {
+      return {
+        duration: '1_hour',
+        durationHours: 1,
+        price: room.pricing.hourly || Math.round(room.pricing.twoToThreeHours / 2),
+        label: '1 Hour',
+        desc: 'Quick freshen up & nap',
+      };
+    }
+    if (hours === 2) {
+      return {
+        duration: '2_hours',
+        durationHours: 2,
+        price: room.pricing.hourly ? room.pricing.hourly * 2 : Math.round(room.pricing.twoToThreeHours * 0.85),
+        label: '2 Hours',
+        desc: 'Power nap & quick revision',
+      };
+    }
+    return {
+      duration: '3_hours',
+      durationHours: 3,
+      price: room.pricing.twoToThreeHours,
+      label: '3 Hours',
+      desc: 'Pre-exam deep rest',
+    };
+  };
+
+  const selectedDetails = getDurationDetails(selectedHours);
+  const calculatedPrice = selectedDetails.price;
+  const duration = selectedDetails.duration;
+  const durationHours = selectedDetails.durationHours;
 
   const handleProceedToReview = (e: React.FormEvent) => {
     e.preventDefault();
+    if (user.uid === room.hostId) {
+      error('Hosts cannot submit booking requests for their own room listings.');
+      return;
+    }
     if (!date || !startTime) {
       error('Please select both a date and start time.');
       return;
@@ -100,10 +168,19 @@ export const BookingRequestModal: React.FC<BookingRequestModalProps> = ({
       error(`This room allows a maximum of ${room.candidateAllowance} ${room.candidateAllowance === 1 ? 'candidate' : 'candidates'}.`);
       return;
     }
+    if (!enabledDurations.includes(selectedHours)) {
+      error('Selected duration is not offered by the host.');
+      return;
+    }
     setStep('review');
   };
 
   const handleConfirmBooking = async () => {
+    if (user.uid === room.hostId) {
+      error('Hosts cannot submit booking requests for their own room listings.');
+      return;
+    }
+
     if (guestCount > room.candidateAllowance) {
       error(`This booking exceeds the host's candidate allowance (${room.candidateAllowance} maximum).`);
       setStep('form');
@@ -111,7 +188,7 @@ export const BookingRequestModal: React.FC<BookingRequestModalProps> = ({
     }
 
     if (!agreedToRules || !agreedToConduct || !agreedToIdVerification) {
-      error('Please confirm all required terms: agree to host rules, conduct & allowance policy, and in-person ID verification.');
+      error('Please confirm all required terms: agree to host rules, conduct & allowance policy, and adult physical ID verification.');
       return;
     }
 
@@ -177,15 +254,37 @@ export const BookingRequestModal: React.FC<BookingRequestModalProps> = ({
           <form onSubmit={handleProceedToReview} className="space-y-4 pt-4">
             {/* Stay Duration Selector */}
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                Stay Duration Option
+              <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center justify-between">
+                <span>Stay Duration Option</span>
+                <span className="text-[11px] text-teal-700 font-semibold">
+                  {enabledDurations.length} duration{enabledDurations.length > 1 ? 's' : ''} available
+                </span>
               </label>
-              <div className="grid grid-cols-1 gap-2">
-                <div className="p-3 rounded-xl border border-brand-500 bg-brand-50/70 text-center text-brand-900">
-                  <p className="font-bold text-xs">2–3 Hours</p>
-                  <p className="text-xs font-extrabold text-teal-700 mt-0.5">₹{room.pricing.twoToThreeHours}</p>
-                  <p className="text-[10px] text-slate-400">Power nap / Fresh up</p>
-                </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                {enabledDurations.map((hrs) => {
+                  const details = getDurationDetails(hrs);
+                  const isSelected = selectedHours === hrs;
+                  return (
+                    <button
+                      key={hrs}
+                      type="button"
+                      onClick={() => setSelectedHours(hrs)}
+                      className={`p-3 rounded-xl border text-left transition-all ${
+                        isSelected
+                          ? 'border-brand-600 bg-brand-50/80 ring-2 ring-brand-500/20 shadow-sm'
+                          : 'border-slate-200 hover:border-slate-300 bg-white'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-0.5">
+                        <span className="font-bold text-xs text-slate-900">{details.label}</span>
+                        <span className={`text-xs font-black ${isSelected ? 'text-teal-700' : 'text-slate-800'}`}>
+                          ₹{details.price}
+                        </span>
+                      </div>
+                      <p className="text-[10px] text-slate-500 leading-snug">{details.desc}</p>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
@@ -313,13 +412,15 @@ export const BookingRequestModal: React.FC<BookingRequestModalProps> = ({
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-slate-500">Duration</span>
-                <span className="font-bold text-teal-800 capitalize">
-                  {duration.replace('_', ' ')} (~{durationHours} hours)
+                <span className="font-bold text-teal-800">
+                  {selectedDetails.label} ({selectedDetails.durationHours} hr{selectedDetails.durationHours > 1 ? 's' : ''})
                 </span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-slate-500">Guests</span>
-                <span className="font-bold text-slate-900">{guestCount} Guest</span>
+                <span className="font-bold text-slate-900">
+                  {guestCount} {guestCount === 1 ? 'Guest' : 'Guests'}
+                </span>
               </div>
               <div className="flex justify-between items-center pt-2 border-t border-teal-100">
                 <span className="text-sm font-bold text-slate-900">Total Payable at Check-in</span>
@@ -354,17 +455,20 @@ export const BookingRequestModal: React.FC<BookingRequestModalProps> = ({
             <div className="bg-amber-50/70 border border-amber-200/80 rounded-2xl p-3.5 space-y-2 text-xs text-amber-950">
               <div className="flex items-center gap-1.5 font-bold text-amber-900">
                 <ShieldCheck className="w-4 h-4 text-amber-600 flex-shrink-0" />
-                <span>Conduct, Allowance & In-Person ID Policy</span>
+                <span>Conduct, Group Allowance & Adult ID Policy</span>
               </div>
-              <ul className="text-[11px] text-amber-900/90 space-y-1 list-disc list-inside">
+              <ul className="text-[11px] text-amber-900/90 space-y-1.5 list-disc list-inside">
                 <li>
-                  <strong>Allowance Limit:</strong> Group size must not exceed {room.candidateAllowance} {room.candidateAllowance === 1 ? 'candidate' : 'candidates'}.
+                  <strong>Allowance Limit:</strong> Your group of {guestCount} {guestCount === 1 ? 'traveller' : 'travellers'} is within the room's limit of {room.candidateAllowance} {room.candidateAllowance === 1 ? 'candidate' : 'candidates'} maximum.
                 </li>
                 <li>
                   <strong>Prohibited Conduct:</strong> Violence, harassment, threats, illegal acts, and use of intoxicating substances (alcohol, illicit drugs) are strictly forbidden on the property.
                 </li>
                 <li>
-                  <strong>Privacy & In-Person ID Check:</strong> To safeguard your privacy, no government ID copies or numbers are uploaded or stored online. You agree to show your original physical government-issued photo ID directly to the host upon check-in.
+                  <strong>Physical ID for Every Adult Traveller:</strong> Every adult traveller in your group ({guestCount} {guestCount === 1 ? 'guest' : 'guests'}) must present an original, valid physical government-issued photo ID (Aadhaar, Passport, Voter ID, Driving License) directly to host {room.hostName} upon arrival.
+                </li>
+                <li>
+                  <strong>Privacy Safeguard:</strong> No ID photos or ID numbers are collected, uploaded, or stored online.
                 </li>
               </ul>
             </div>
@@ -397,7 +501,7 @@ export const BookingRequestModal: React.FC<BookingRequestModalProps> = ({
                   className="mt-0.5 w-4 h-4 text-brand-600 rounded border-slate-300 focus:ring-brand-500"
                 />
                 <span className="text-slate-700 leading-snug">
-                  I confirm our group does not exceed the candidate allowance ({room.candidateAllowance} max), and will refrain from violence, harassment, illegal acts, and intoxicating substances.
+                  I confirm our group ({guestCount} {guestCount === 1 ? 'candidate' : 'candidates'}) does not exceed the candidate allowance ({room.candidateAllowance} max), and will refrain from violence, harassment, illegal acts, and intoxicating substances.
                 </span>
               </label>
 
@@ -410,7 +514,7 @@ export const BookingRequestModal: React.FC<BookingRequestModalProps> = ({
                   className="mt-0.5 w-4 h-4 text-brand-600 rounded border-slate-300 focus:ring-brand-500"
                 />
                 <span className="text-slate-700 leading-snug">
-                  I confirm that I will present a valid physical <strong>government-issued photo ID</strong> directly to the host upon arrival for in-person identity verification.
+                  I confirm that <strong>every adult traveller in our group ({guestCount} {guestCount === 1 ? 'person' : 'people'})</strong> will present their valid physical <strong>government-issued photo ID</strong> directly to the host upon arrival for in-person identity verification.
                 </span>
               </label>
             </div>

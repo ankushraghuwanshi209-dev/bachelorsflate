@@ -90,6 +90,8 @@ export const HostDashboardPage: React.FC<HostDashboardPageProps> = ({
   const [minStayHours, setMinStayHours] = useState(2);
   const [maxStayHours, setMaxStayHours] = useState(24);
   const [price2to3, setPrice2to3] = useState('');
+  const [priceHourly, setPriceHourly] = useState('');
+  const [availableDurations, setAvailableDurations] = useState<number[]>([1, 2, 3]);
   const [roomStatus, setRoomStatus] = useState<RoomStatus>('active');
   const [hostConsent, setHostConsent] = useState(false);
 
@@ -145,6 +147,8 @@ export const HostDashboardPage: React.FC<HostDashboardPageProps> = ({
     );
     setAvailableTimes('07:00 AM - 10:00 PM');
     setPrice2to3('');
+    setPriceHourly('');
+    setAvailableDurations([1, 2, 3]);
     setRoomStatus('active');
     setHostConsent(false);
     setPhotos([
@@ -169,6 +173,12 @@ export const HostDashboardPage: React.FC<HostDashboardPageProps> = ({
     setMinStayHours(room.minStayHours);
     setMaxStayHours(room.maxStayHours);
     setPrice2to3(String(room.pricing.twoToThreeHours));
+    setPriceHourly(room.pricing?.hourly ? String(room.pricing.hourly) : '');
+    setAvailableDurations(
+      Array.isArray(room.availableDurations) && room.availableDurations.length > 0
+        ? room.availableDurations
+        : [1, 2, 3]
+    );
     setRoomStatus(room.status);
     setHostConsent(room.termsAgreed ?? true);
     setPhotos(room.photos || []);
@@ -241,6 +251,17 @@ export const HostDashboardPage: React.FC<HostDashboardPageProps> = ({
       return;
     }
 
+    if (availableDurations.length === 0) {
+      error('Please select at least one available booking duration (1 hr, 2 hrs, or 3 hrs).');
+      return;
+    }
+
+    const parsedHourly = priceHourly.trim() ? Number(priceHourly) : Math.round(parsedPrice / 2);
+    if (!Number.isFinite(parsedHourly) || parsedHourly <= 0) {
+      error('Please enter a valid positive price for the 1-hour rate.');
+      return;
+    }
+
     if (!hostConsent) {
       error('Please review and agree to the Host Authorization & Community Safety Standards before publishing.');
       return;
@@ -263,6 +284,7 @@ export const HostDashboardPage: React.FC<HostDashboardPageProps> = ({
         city: city.trim(),
         neighbourhood: neighbourhood.trim(),
         candidateAllowance: parsedCandidateAllowance,
+        availableDurations: [...availableDurations].sort(),
         approxLocation: '',
         nearbyLandmark: '',
         privateDetails: {
@@ -274,7 +296,7 @@ export const HostDashboardPage: React.FC<HostDashboardPageProps> = ({
         amenities: selectedAmenities,
         houseRules,
         pricing: {
-          hourly: Math.round(parsedPrice / 2),
+          hourly: parsedHourly,
           twoToThreeHours: parsedPrice,
         },
         minStayHours: Number(minStayHours),
@@ -834,14 +856,75 @@ export const HostDashboardPage: React.FC<HostDashboardPageProps> = ({
 
           </div>
 
-          {/* Pricing & Duration Settings */}
-          <div>
-            <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-2">
-              Slot Pricing (INR ₹)
-            </h3>
-            <div className="grid grid-cols-1 gap-3">
+          {/* Available Booking Durations & Slot Pricing */}
+          <div className="bg-slate-50/70 p-4 sm:p-5 rounded-2xl border border-slate-200 space-y-4">
+            <div>
+              <label className="block text-xs font-bold text-slate-900 uppercase tracking-wider mb-1">
+                Available Booking Durations *
+              </label>
+              <p className="text-[11px] text-slate-500 mb-3">
+                Select which micro-stay durations you allow travellers to book for this room (1 hr, 2 hrs, and/or 3 hrs).
+              </p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {[
+                  { hours: 1, title: '1 Hour', subtitle: 'Quick freshen up / nap' },
+                  { hours: 2, title: '2 Hours', subtitle: 'Revision & rest' },
+                  { hours: 3, title: '3 Hours', subtitle: 'Pre-exam deep rest' },
+                ].map((item) => {
+                  const isChecked = availableDurations.includes(item.hours);
+                  return (
+                    <label
+                      key={item.hours}
+                      className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer select-none transition-all ${
+                        isChecked
+                          ? 'border-brand-500 bg-brand-50/60 shadow-sm'
+                          : 'border-slate-200 bg-white hover:bg-slate-50'
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isChecked}
+                        onChange={() => {
+                          setAvailableDurations((prev) =>
+                            prev.includes(item.hours)
+                              ? prev.filter((h) => h !== item.hours)
+                              : [...prev, item.hours].sort()
+                          );
+                        }}
+                        className="mt-0.5 w-4 h-4 text-brand-600 rounded border-slate-300 focus:ring-brand-500"
+                      />
+                      <div>
+                        <p className="text-xs font-bold text-slate-900">{item.title}</p>
+                        <p className="text-[10px] text-slate-500">{item.subtitle}</p>
+                      </div>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-200/80">
               <div>
-                <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                  1-Hour Rate (₹) {availableDurations.includes(1) && '*'}
+                </label>
+                <input
+                  type="number"
+                  min={0.01}
+                  step="any"
+                  placeholder={price2to3 ? `E.g., ₹${Math.round(Number(price2to3) / 2)}` : 'Enter 1-hr price'}
+                  value={priceHourly}
+                  onChange={(e) => setPriceHourly(e.target.value)}
+                  className="w-full text-xs font-bold px-3 py-2.5 rounded-xl border border-slate-200 bg-white"
+                />
+                <p className="text-[10px] text-slate-400 mt-0.5">
+                  Charged when a traveller books a 1-hour micro-stay.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-slate-700 mb-1">
                   2–3 Hours Rate (₹) *
                 </label>
                 <input
@@ -849,14 +932,16 @@ export const HostDashboardPage: React.FC<HostDashboardPageProps> = ({
                   required
                   min={0.01}
                   step="any"
-                  placeholder="Enter price"
+                  placeholder="Enter 2-3 hrs price"
                   value={price2to3}
                   onChange={(e) => setPrice2to3(e.target.value)}
                   onInvalid={() => error('Please enter a valid positive price for the 2–3 hours rate.')}
-                  className="w-full text-xs font-bold px-3 py-2.5 rounded-xl border border-slate-200"
+                  className="w-full text-xs font-bold px-3 py-2.5 rounded-xl border border-slate-200 bg-white"
                 />
+                <p className="text-[10px] text-slate-400 mt-0.5">
+                  Standard base rate for 2 to 3 hour stays.
+                </p>
               </div>
-
             </div>
           </div>
 

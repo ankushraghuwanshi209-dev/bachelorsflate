@@ -20,7 +20,7 @@ export interface PublicProfile {
   bio?: string;
 }
 
-export type StayDurationType = '2-3_hours' | '4-6_hours';
+export type StayDurationType = '1_hour' | '2_hours' | '3_hours' | '2-3_hours' | '4-6_hours';
 
 export interface RoomPricing {
   hourly: number;
@@ -54,6 +54,7 @@ export interface RoomListing {
   city: string;
   neighbourhood: string;
   candidateAllowance: number;
+  availableDurations: number[]; // 1, 2, and/or 3 hours
   approxLocation: string; // PUBLIC: e.g., "Near Central Metro, Within 400m of City Centre"
   privateDetails?: RoomPrivateDetails;
   amenities: string[];
@@ -123,7 +124,9 @@ export interface Review {
 export interface SearchFilters {
   city: string;
   neighbourhood?: string;
+  query?: string;
   duration: StayDurationType | 'any';
+  guestCount?: number;
   minPrice?: number;
   maxPrice?: number;
   bathroomType?: BathroomType | 'any';
