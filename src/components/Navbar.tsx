@@ -137,16 +137,10 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate }) => {
 
           {/* CTA & User Profile Controls */}
           <div className="hidden md:flex items-center gap-3">
-            {/* Host CTA */}
-            {(!user || !user.roles.includes('host')) && (
+            {/* Show 'List your room' CTA only if guest is not logged in */}
+            {!user && (
               <button
-                onClick={() => {
-                  if (!user) {
-                    handleNav('register');
-                  } else {
-                    handleRoleToggle();
-                  }
-                }}
+                onClick={() => handleNav('register')}
                 className="text-xs font-bold text-slate-700 hover:text-brand-700 px-3 py-2 rounded-lg hover:bg-slate-50 transition-colors flex items-center gap-1.5"
               >
                 <Sparkles className="w-3.5 h-3.5 text-amber-500" />
@@ -154,7 +148,8 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate }) => {
               </button>
             )}
 
-            {user?.roles.includes('host') && (
+            {/* 'Add Room' button: ONLY appears when user is logged in AND Host role is selected */}
+            {user && activeRole === 'host' && (
               <button
                 onClick={() => handleNav('host-dashboard', 'new')}
                 className="bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold px-3.5 py-2 rounded-xl shadow-sm hover:shadow transition-all flex items-center gap-1.5"
@@ -199,13 +194,21 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate }) => {
                       Traveller Bookings
                     </button>
 
-                    {(user.roles.includes('host') || activeRole === 'host') && (
+                    {activeRole === 'host' ? (
                       <button
                         onClick={() => handleNav('host-dashboard')}
-                        className="w-full text-left px-4 py-2 hover:bg-slate-50 flex items-center gap-2 text-xs font-medium"
+                        className="w-full text-left px-4 py-2 hover:bg-purple-50 text-purple-700 flex items-center gap-2 text-xs font-semibold"
                       >
                         <Layers className="w-4 h-4 text-purple-600" />
                         Host Dashboard & Listings
+                      </button>
+                    ) : (
+                      <button
+                        onClick={handleRoleToggle}
+                        className="w-full text-left px-4 py-2 hover:bg-slate-50 flex items-center gap-2 text-xs font-medium text-slate-600"
+                      >
+                        <Layers className="w-4 h-4 text-slate-400" />
+                        Switch to Host Mode
                       </button>
                     )}
 
@@ -247,12 +250,19 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate }) => {
             )}
           </div>
 
-          {/* Mobile menu toggle */}
+          {/* Mobile menu toggle & quick login */}
           <div className="flex md:hidden items-center gap-2">
-            {user && (
+            {!user ? (
+              <button
+                onClick={() => handleNav('login')}
+                className="px-3 py-1.5 text-xs font-bold text-brand-700 bg-brand-50 border border-brand-200 rounded-xl"
+              >
+                Log In
+              </button>
+            ) : (
               <button
                 onClick={handleRoleToggle}
-                className="px-2 py-1 rounded-full text-[11px] font-bold border bg-teal-50 text-teal-800 border-teal-200"
+                className="px-2.5 py-1 rounded-full text-[11px] font-bold border bg-teal-50 text-teal-800 border-teal-200"
               >
                 {activeRole === 'host' ? 'Host' : 'Traveller'}
               </button>
@@ -263,7 +273,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate }) => {
               className="p-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100"
               aria-label="Toggle Navigation Menu"
             >
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
           </div>
         </div>
@@ -326,13 +336,23 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate }) => {
                 Traveller Bookings
               </button>
 
-              <button
-                onClick={() => handleNav('host-dashboard')}
-                className="w-full text-left px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-2.5"
-              >
-                <Layers className="w-4 h-4 text-purple-600" />
-                Host Dashboard & Rooms
-              </button>
+              {activeRole === 'host' ? (
+                <button
+                  onClick={() => handleNav('host-dashboard')}
+                  className="w-full text-left px-3 py-2.5 rounded-lg text-sm font-semibold text-purple-700 hover:bg-purple-50 flex items-center gap-2.5"
+                >
+                  <Layers className="w-4 h-4 text-purple-600" />
+                  Host Dashboard & Rooms
+                </button>
+              ) : (
+                <button
+                  onClick={handleRoleToggle}
+                  className="w-full text-left px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-2.5"
+                >
+                  <Layers className="w-4 h-4 text-slate-500" />
+                  Switch to Host Mode
+                </button>
+              )}
 
               <button
                 onClick={() => handleNav('profile')}

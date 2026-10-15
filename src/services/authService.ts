@@ -175,7 +175,7 @@ export async function loginWithGoogle(): Promise<UserProfile> {
     throw new Error('Supabase is not configured.');
   }
 
-  const { error } = await supabase.auth.signInWithOAuth({
+  const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
       redirectTo: window.location.origin,
@@ -186,9 +186,50 @@ export async function loginWithGoogle(): Promise<UserProfile> {
     throw new Error(error.message);
   }
 
+  if (data?.url) {
+    window.location.href = data.url;
+    return new Promise(() => {});
+  }
+
   const current = getLocalSessionUser();
   if (current) return current;
-  throw new Error('Redirecting to Google sign in...');
+  return new Promise(() => {});
+}
+
+export async function loginWithSimulatedGoogle(name?: string, email?: string): Promise<UserProfile> {
+  const googleUser: UserProfile = {
+    uid: 'google_' + Math.random().toString(36).substring(2, 10),
+    email: email || 'user.google@gmail.com',
+    displayName: name || 'Google Verified User',
+    roles: ['traveller'],
+    photoURL: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
+    isVerified: true,
+    createdAt: new Date().toISOString(),
+  };
+
+  if (isSupabaseConfigured && supabase) {
+    try {
+      await supabase.from('users').upsert({
+        uid: googleUser.uid,
+        email: googleUser.email,
+        display_name: googleUser.displayName,
+        roles: googleUser.roles,
+        photo_url: googleUser.photoURL,
+        is_verified: true,
+        created_at: googleUser.createdAt,
+      });
+      await supabase.from('public_profiles').upsert({
+        id: googleUser.uid,
+        display_name: googleUser.displayName,
+        photo_url: googleUser.photoURL,
+      });
+    } catch (e) {
+      console.warn('Simulated google save error:', e);
+    }
+  }
+
+  localStorage.setItem(USER_SESSION_KEY, JSON.stringify(googleUser));
+  return googleUser;
 }
 
 export async function resetUserPassword(email: string): Promise<void> {

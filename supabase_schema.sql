@@ -48,7 +48,7 @@ CREATE TABLE IF NOT EXISTS public.rooms (
   bathroom_type TEXT DEFAULT 'attached',
   nearby_landmark TEXT,
   house_rules TEXT[] DEFAULT ARRAY[]::TEXT[],
-  pricing JSONB NOT NULL DEFAULT '{"hourly": 100, "twoToThreeHours": 350, "fourToSixHours": 600, "fullDay": 1200}'::JSONB,
+  pricing JSONB NOT NULL DEFAULT '{"hourly": 100, "twoToThreeHours": 350}'::JSONB,
   min_stay_hours INTEGER DEFAULT 2,
   max_stay_hours INTEGER DEFAULT 24,
   available_times TEXT DEFAULT '07:00 AM - 10:00 PM',

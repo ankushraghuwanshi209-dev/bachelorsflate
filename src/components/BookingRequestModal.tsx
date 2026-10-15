@@ -37,7 +37,7 @@ export const BookingRequestModal: React.FC<BookingRequestModalProps> = ({
     return today.toISOString().split('T')[0];
   });
   const [startTime, setStartTime] = useState('09:00');
-  const [duration, setDuration] = useState<StayDurationType>('2-3_hours');
+  const duration: StayDurationType = '2-3_hours';
   const [guestCount, setGuestCount] = useState(1);
   const [message, setMessage] = useState('');
   const [travellerPhone, setTravellerPhone] = useState(user?.phoneNumber || '');
@@ -78,16 +78,8 @@ export const BookingRequestModal: React.FC<BookingRequestModalProps> = ({
   }
 
   // Price & duration calculations
-  let durationHours = 3;
-  let calculatedPrice = room.pricing.twoToThreeHours;
-
-  if (duration === '4-6_hours') {
-    durationHours = 6;
-    calculatedPrice = room.pricing.fourToSixHours;
-  } else if (duration === 'full_day') {
-    durationHours = 12;
-    calculatedPrice = room.pricing.fullDay;
-  }
+  const durationHours = 3;
+  const calculatedPrice = room.pricing.twoToThreeHours;
 
   const handleProceedToReview = (e: React.FormEvent) => {
     e.preventDefault();
@@ -164,48 +156,12 @@ export const BookingRequestModal: React.FC<BookingRequestModalProps> = ({
               <label className="block text-xs font-bold text-slate-700 mb-1.5">
                 Stay Duration Option
               </label>
-              <div className="grid grid-cols-3 gap-2">
-                <button
-                  type="button"
-                  onClick={() => setDuration('2-3_hours')}
-                  className={`p-3 rounded-xl border text-center transition-all ${
-                    duration === '2-3_hours'
-                      ? 'border-brand-500 bg-brand-50/70 text-brand-900 shadow-sm'
-                      : 'border-slate-200 hover:border-slate-300 text-slate-700'
-                  }`}
-                >
+              <div className="grid grid-cols-1 gap-2">
+                <div className="p-3 rounded-xl border border-brand-500 bg-brand-50/70 text-center text-brand-900">
                   <p className="font-bold text-xs">2–3 Hours</p>
                   <p className="text-xs font-extrabold text-teal-700 mt-0.5">₹{room.pricing.twoToThreeHours}</p>
                   <p className="text-[10px] text-slate-400">Power nap / Fresh up</p>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setDuration('4-6_hours')}
-                  className={`p-3 rounded-xl border text-center transition-all ${
-                    duration === '4-6_hours'
-                      ? 'border-brand-500 bg-brand-50/70 text-brand-900 shadow-sm'
-                      : 'border-slate-200 hover:border-slate-300 text-slate-700'
-                  }`}
-                >
-                  <p className="font-bold text-xs">4–6 Hours</p>
-                  <p className="text-xs font-extrabold text-teal-700 mt-0.5">₹{room.pricing.fourToSixHours}</p>
-                  <p className="text-[10px] text-slate-400">Study / Pre-exam</p>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setDuration('full_day')}
-                  className={`p-3 rounded-xl border text-center transition-all ${
-                    duration === 'full_day'
-                      ? 'border-brand-500 bg-brand-50/70 text-brand-900 shadow-sm'
-                      : 'border-slate-200 hover:border-slate-300 text-slate-700'
-                  }`}
-                >
-                  <p className="font-bold text-xs">Full Day</p>
-                  <p className="text-xs font-extrabold text-teal-700 mt-0.5">₹{room.pricing.fullDay}</p>
-                  <p className="text-[10px] text-slate-400">All-day comfort</p>
-                </button>
+                </div>
               </div>
             </div>
 

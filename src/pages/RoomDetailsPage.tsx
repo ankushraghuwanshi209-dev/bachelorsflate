@@ -73,6 +73,43 @@ export const RoomDetailsPage: React.FC<RoomDetailsPageProps> = ({
     info('Room link copied to clipboard.');
   };
 
+  // AUTH GUARD: User without login cannot view room details
+  if (!user) {
+    return (
+      <div className="max-w-md mx-auto px-4 py-16 text-center space-y-6">
+        <div className="w-16 h-16 rounded-3xl bg-teal-50 border border-teal-200 text-teal-700 flex items-center justify-center mx-auto shadow-sm">
+          <Lock className="w-8 h-8 text-teal-600" />
+        </div>
+        <div className="space-y-2">
+          <div className="inline-flex items-center gap-1.5 text-xs font-bold text-teal-700 bg-teal-50 px-3 py-1 rounded-full border border-teal-100">
+            <ShieldCheck className="w-3.5 h-3.5" />
+            Protected Room Details
+          </div>
+          <h2 className="text-2xl font-extrabold text-slate-900 tracking-tight">
+            Log In to View Room Details
+          </h2>
+          <p className="text-xs text-slate-600 leading-relaxed max-w-sm mx-auto">
+            Please log in or create an account to view photos, full pricing, verified host reviews, and request daytime micro-stays.
+          </p>
+        </div>
+        <div className="flex flex-col gap-3 pt-2 max-w-xs mx-auto">
+          <button
+            onClick={onRequireAuth}
+            className="w-full py-3 px-6 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold shadow-md transition-all flex items-center justify-center gap-2"
+          >
+            <span>Sign In to Continue</span>
+          </button>
+          <button
+            onClick={onBack}
+            className="w-full py-2.5 px-6 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition-all"
+          >
+            Back to Listings
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   if (loading) {
     return (
       <div className="max-w-6xl mx-auto px-4 py-12 animate-pulse space-y-6">
@@ -370,21 +407,6 @@ export const RoomDetailsPage: React.FC<RoomDetailsPageProps> = ({
                   <span className="text-lg font-black text-teal-800">₹{room.pricing.twoToThreeHours}</span>
                 </div>
 
-                <div className="flex items-baseline justify-between p-3 rounded-2xl bg-slate-50 border border-slate-200/80">
-                  <div>
-                    <p className="font-bold text-xs text-slate-900">4–6 Hours</p>
-                    <p className="text-[10px] text-slate-500">Study revision & rest</p>
-                  </div>
-                  <span className="text-base font-extrabold text-slate-900">₹{room.pricing.fourToSixHours}</span>
-                </div>
-
-                <div className="flex items-baseline justify-between p-3 rounded-2xl bg-slate-50 border border-slate-200/80">
-                  <div>
-                    <p className="font-bold text-xs text-slate-900">Full Day</p>
-                    <p className="text-[10px] text-slate-500">Whole day access</p>
-                  </div>
-                  <span className="text-base font-extrabold text-slate-900">₹{room.pricing.fullDay}</span>
-                </div>
               </div>
             </div>
 
@@ -417,6 +439,24 @@ export const RoomDetailsPage: React.FC<RoomDetailsPageProps> = ({
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Mobile Sticky Booking Bar (Fixed right above bottom navigation) */}
+      <div className="lg:hidden fixed bottom-12 inset-x-0 z-30 bg-white/95 backdrop-blur-md border-t border-slate-200/90 px-4 py-3 flex items-center justify-between shadow-2xl">
+        <div>
+          <span className="text-[10px] text-slate-400 block font-bold uppercase tracking-wider">Starting at</span>
+          <div className="flex items-baseline gap-1">
+            <span className="text-lg font-black text-teal-800">₹{room.pricing.twoToThreeHours}</span>
+            <span className="text-xs text-slate-500 font-semibold">/ 2–3 hrs</span>
+          </div>
+        </div>
+        <button
+          onClick={() => setShowBookingModal(true)}
+          className="py-2.5 px-5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold shadow-md transition-all flex items-center gap-1.5"
+        >
+          <Calendar className="w-4 h-4" />
+          <span>Request to Book</span>
+        </button>
       </div>
 
       {/* Booking Modal */}

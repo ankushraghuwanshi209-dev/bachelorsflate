@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import {
   Search,
   MapPin,
-  Clock,
   Sparkles,
   ShieldCheck,
   CheckCircle2,
@@ -15,7 +14,7 @@ import {
   Coffee,
   HelpCircle
 } from 'lucide-react';
-import type { RoomListing, StayDurationType } from '../types';
+import type { RoomListing } from '../types';
 import { getPublicRooms } from '../services/roomService';
 import { RoomCard } from '../components/RoomCard';
 import { useAuth } from '../context/AuthContext';
@@ -38,11 +37,10 @@ const POPULAR_CITIES = [
 ];
 
 export const HomePage: React.FC<HomePageProps> = ({ onNavigate, onSelectRoom }) => {
-  const { user, activeRole } = useAuth();
+  const { user, activeRole, setActiveRole } = useAuth();
   const { info, error } = useToast();
 
   const [searchCity, setSearchCity] = useState('');
-  const [selectedDuration, setSelectedDuration] = useState<StayDurationType>('2-3_hours');
   const [isDetectingLocation, setIsDetectingLocation] = useState(false);
   const [featuredRooms, setFeaturedRooms] = useState<RoomListing[]>([]);
   const [loadingRooms, setLoadingRooms] = useState(true);
@@ -86,7 +84,12 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate, onSelectRoom }) 
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onNavigate('search', JSON.stringify({ city: searchCity, duration: selectedDuration }));
+    if (!user) {
+      info('Please log in or sign up to view and search available rooms.');
+      onNavigate('login');
+      return;
+    }
+    onNavigate('search', JSON.stringify({ city: searchCity }));
   };
 
   return (
@@ -105,7 +108,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate, onSelectRoom }) 
             </h1>
 
             <p className="text-sm sm:text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">
-              Arriving in town for a competitive exam, job interview, or quick stopover? Book a clean, quiet room with fresh towels, AC, and private bath for <strong>2–3 hours</strong>, <strong>4–6 hours</strong>, or a <strong>full day</strong>.
+              Arriving in town for a competitive exam, job interview, or quick stopover? Book a clean, quiet room with fresh towels, AC, and private bath for a <strong>2–3 hour</strong> stay.
             </p>
 
             {/* Interactive Search Widget */}
@@ -113,7 +116,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate, onSelectRoom }) 
               <form onSubmit={handleSearchSubmit} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
                   {/* City Input with Geolocation button */}
-                  <div className="md:col-span-6 relative">
+                  <div className="md:col-span-10 relative">
                     <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1 ml-1">
                       Where do you need a room?
                     </label>
@@ -136,25 +139,6 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate, onSelectRoom }) 
                         <Compass className={`w-3.5 h-3.5 ${isDetectingLocation ? 'animate-spin text-brand-600' : ''}`} />
                         <span className="hidden sm:inline">Near me</span>
                       </button>
-                    </div>
-                  </div>
-
-                  {/* Stay Duration Selector */}
-                  <div className="md:col-span-4">
-                    <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1 ml-1">
-                      Stay Duration
-                    </label>
-                    <div className="relative flex items-center">
-                      <Clock className="w-4 h-4 text-brand-600 absolute left-3.5 pointer-events-none" />
-                      <select
-                        value={selectedDuration}
-                        onChange={(e) => setSelectedDuration(e.target.value as StayDurationType)}
-                        className="w-full pl-10 pr-4 py-3 rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm font-semibold text-slate-900 bg-white"
-                      >
-                        <option value="2-3_hours">2–3 Hours (Nap & Freshen Up)</option>
-                        <option value="4-6_hours">4–6 Hours (Pre-Exam Revision)</option>
-                        <option value="full_day">Full Day (Daytime Rest)</option>
-                      </select>
                     </div>
                   </div>
 
@@ -260,14 +244,55 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate, onSelectRoom }) 
           </div>
 
           <button
-            onClick={() => onNavigate('search')}
+            onClick={() => onNavigate(user ? 'search' : 'login')}
             className="inline-flex items-center gap-1.5 text-xs font-bold text-brand-700 hover:text-brand-800 transition-colors"
           >
             Browse all rooms across cities <ArrowRight className="w-4 h-4" />
           </button>
         </div>
 
-        {loadingRooms ? (
+        {!user ? (
+          /* Members Only Auth Gate for Room Listings */
+          <div className="bg-gradient-to-br from-teal-50/70 via-white to-brand-50/60 rounded-3xl border border-teal-200/80 p-8 sm:p-12 text-center max-w-2xl mx-auto shadow-sm space-y-5">
+            <div className="w-14 h-14 bg-white border border-teal-200 text-teal-600 rounded-2xl flex items-center justify-center mx-auto shadow-sm">
+              <Lock className="w-7 h-7 text-teal-600" />
+            </div>
+
+            <div className="space-y-2">
+              <div className="inline-flex items-center gap-1.5 text-xs font-bold text-teal-800 bg-teal-100/70 px-3 py-1 rounded-full border border-teal-200">
+                <ShieldCheck className="w-3.5 h-3.5 text-teal-700" />
+                Community Privacy Guard
+              </div>
+              <h3 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
+                Log In to View Available Rooms & Rates
+              </h3>
+              <p className="text-xs sm:text-sm text-slate-600 max-w-lg mx-auto leading-relaxed">
+                To guarantee cleanliness, aspirant security, and host privacy, available rooms, study setups, photos, and exact slot prices are exclusively viewable by registered members.
+              </p>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2 max-w-xs sm:max-w-md mx-auto">
+              <button
+                onClick={() => onNavigate('login')}
+                className="w-full sm:w-auto px-6 py-3 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2"
+              >
+                Log In to View Rooms
+              </button>
+              <button
+                onClick={() => onNavigate('register')}
+                className="w-full sm:w-auto px-6 py-3 bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 rounded-xl text-xs font-bold shadow-sm transition-all"
+              >
+                Create Free Account
+              </button>
+            </div>
+
+            <div className="pt-4 border-t border-teal-100/80 grid grid-cols-3 gap-2 text-[11px] text-slate-500">
+              <div>✓ 50+ Verified Rooms</div>
+              <div>⚡ 2–3h Slots from ₹399</div>
+              <div>🔒 Safe & Quiet</div>
+            </div>
+          </div>
+        ) : loadingRooms ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1, 2, 3].map((i) => (
               <div key={i} className="bg-white rounded-2xl h-80 border border-slate-200 animate-pulse p-4 space-y-3">
@@ -290,10 +315,13 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate, onSelectRoom }) 
             </div>
             <h3 className="text-lg font-bold text-slate-900">Be the First Host to List a Room</h3>
             <p className="text-xs text-slate-600 leading-relaxed">
-              Have a clean room, study flat, or quiet space? Welcome exam aspirants, travellers, and interview candidates for 2–3 hour or full-day micro-stays.
+              Have a clean room, study flat, or quiet space? Welcome exam aspirants, travellers, and interview candidates for 2–3 hour micro-stays.
             </p>
             <button
-              onClick={() => onNavigate('host-dashboard')}
+              onClick={() => {
+                setActiveRole('host');
+                onNavigate('host-dashboard');
+              }}
               className="inline-flex items-center gap-2 px-5 py-2.5 bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold rounded-xl transition-colors shadow-sm"
             >
               List Your Room as a Host
@@ -319,7 +347,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate, onSelectRoom }) 
             </div>
             <h3 className="font-bold text-base text-white">Find by City & Hours</h3>
             <p className="text-xs text-slate-300 leading-relaxed">
-              Search by city, exam centre, or railway station. Select whether you need 2–3 hours, 4–6 hours, or a full day.
+              Search by city, exam centre, or railway station. Find rooms for a 2–3 hour stay.
             </p>
           </div>
 
@@ -409,6 +437,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate, onSelectRoom }) 
                   if (!user) {
                     onNavigate('register');
                   } else {
+                    setActiveRole('host');
                     onNavigate('host-dashboard', 'new');
                   }
                 }}

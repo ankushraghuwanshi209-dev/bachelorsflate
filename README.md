@@ -9,8 +9,6 @@
 
 1. **Flexible Micro-Stay Durations:**
    - **2–3 Hours:** Power nap, freshen up with a hot shower, change clothes.
-   - **4–6 Hours:** Pre-exam revision, interview preparation, quiet study desk with Wi-Fi.
-   - **Full Day:** Daytime comfort and luggage safety before evening transit.
 
 2. **Dual-Role Single Account:**
    - Users can be a **Traveller**, a **Host**, or **Both** using one account.

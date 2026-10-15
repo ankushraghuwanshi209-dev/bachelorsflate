@@ -20,13 +20,11 @@ export interface PublicProfile {
   bio?: string;
 }
 
-export type StayDurationType = '2-3_hours' | '4-6_hours' | 'full_day';
+export type StayDurationType = '2-3_hours' | '4-6_hours';
 
 export interface RoomPricing {
   hourly: number;
   twoToThreeHours: number;
-  fourToSixHours: number;
-  fullDay: number;
 }
 
 export type RoomStatus = 'active' | 'draft' | 'paused';

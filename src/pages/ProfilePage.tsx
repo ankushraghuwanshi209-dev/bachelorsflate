@@ -19,9 +19,10 @@ import { useToast } from '../context/ToastContext';
 
 interface ProfilePageProps {
   onOpenLegal: (type: 'privacy' | 'terms' | 'deletion') => void;
+  onNavigateToAuth?: () => void;
 }
 
-export const ProfilePage: React.FC<ProfilePageProps> = ({ onOpenLegal }) => {
+export const ProfilePage: React.FC<ProfilePageProps> = ({ onOpenLegal, onNavigateToAuth }) => {
   const { user, updateProfile, activeRole, setActiveRole } = useAuth();
   const { success, error, info } = useToast();
 
@@ -38,6 +39,14 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onOpenLegal }) => {
       <div className="max-w-md mx-auto px-4 py-20 text-center space-y-4">
         <h2 className="text-xl font-bold text-slate-900">Please Sign In</h2>
         <p className="text-xs text-slate-500">Log in to view and manage your profile settings.</p>
+        {onNavigateToAuth && (
+          <button
+            onClick={onNavigateToAuth}
+            className="px-6 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold shadow transition-all"
+          >
+            Sign In Now
+          </button>
+        )}
       </div>
     );
   }

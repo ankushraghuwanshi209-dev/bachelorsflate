@@ -92,7 +92,7 @@ export const LegalModals: React.FC<LegalModalProps> = ({ type, onClose }) => {
               </div>
               <h4 className="font-bold text-slate-900 text-xs">1. Purpose and Permitted Use</h4>
               <p>
-                Bachelors Flat facilitates short daytime micro-stays (2–3 hours, 4–6 hours, full day) for students, exam aspirants, interview candidates, and remote professionals needing a clean, peaceful space to rest, freshen up, or study.
+                Bachelors Flat facilitates short daytime micro-stays of 2–3 hours for students, exam aspirants, interview candidates, and remote professionals needing a clean, peaceful space to rest, freshen up, or study.
               </p>
               <h4 className="font-bold text-slate-900 text-xs">2. Host Responsibilities</h4>
               <p>

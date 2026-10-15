@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { AuthProvider } from './context/AuthContext';
-import { ToastProvider } from './context/ToastContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import { ToastProvider, useToast } from './context/ToastContext';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
+import { MobileBottomNav } from './components/MobileBottomNav';
 import { LegalModals } from './components/LegalModals';
 
 // Pages
@@ -16,6 +17,8 @@ import { SafetyPage } from './pages/SafetyPage';
 import { AuthPages } from './pages/AuthPages';
 
 function AppContent() {
+  const { user } = useAuth();
+  const { info } = useToast();
   const [currentView, setCurrentView] = useState<string>('home');
   const [viewParam, setViewParam] = useState<string | undefined>(undefined);
   const [legalModalType, setLegalModalType] = useState<'privacy' | 'terms' | 'deletion' | null>(null);
@@ -31,6 +34,11 @@ function AppContent() {
   };
 
   const handleSelectRoom = (roomId: string) => {
+    if (!user) {
+      info('Please log in or create an account to view room details.');
+      setCurrentView('login');
+      return;
+    }
     setCurrentView('room-details');
     setViewParam(roomId);
   };
@@ -47,7 +55,11 @@ function AppContent() {
         )}
 
         {currentView === 'search' && (
-          <SearchPage initialSearch={viewParam} onSelectRoom={handleSelectRoom} />
+          <SearchPage
+            initialSearch={viewParam}
+            onSelectRoom={handleSelectRoom}
+            onRequireAuth={() => setCurrentView('login')}
+          />
         )}
 
         {currentView === 'room-details' && (
@@ -67,6 +79,7 @@ function AppContent() {
             highlightBookingId={viewParam}
             onNavigateToRoom={handleSelectRoom}
             onNavigateToSearch={() => setCurrentView('search')}
+            onNavigate={handleNavigate}
           />
         )}
 
@@ -74,11 +87,15 @@ function AppContent() {
           <HostDashboardPage
             initialTab={(viewParam as any) || 'listings'}
             onNavigateToRoom={handleSelectRoom}
+            onNavigate={handleNavigate}
           />
         )}
 
         {currentView === 'profile' && (
-          <ProfilePage onOpenLegal={(type) => setLegalModalType(type)} />
+          <ProfilePage
+            onOpenLegal={(type) => setLegalModalType(type)}
+            onNavigateToAuth={() => setCurrentView('login')}
+          />
         )}
 
         {currentView === 'safety' && <SafetyPage />}
@@ -93,9 +110,17 @@ function AppContent() {
       </div>
 
       {/* Footer */}
-      <Footer
+      <div className="pb-16 md:pb-0">
+        <Footer
+          onNavigate={handleNavigate}
+          onOpenLegal={(type) => setLegalModalType(type)}
+        />
+      </div>
+
+      {/* Mobile Sticky Bottom Navigation Bar */}
+      <MobileBottomNav
+        currentView={currentView}
         onNavigate={handleNavigate}
-        onOpenLegal={(type) => setLegalModalType(type)}
       />
 
       {/* Privacy / Terms / Account Deletion Modal */}

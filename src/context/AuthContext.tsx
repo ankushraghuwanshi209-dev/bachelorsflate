@@ -5,6 +5,7 @@ import {
   signUpWithEmail,
   loginWithEmail,
   loginWithGoogle,
+  loginWithSimulatedGoogle,
   resetUserPassword,
   updateUserProfile,
   logoutUser,
@@ -20,6 +21,7 @@ interface AuthContextType {
   signUp: (email: string, pass: string, name: string, roles: UserRole[], phone?: string) => Promise<void>;
   login: (email: string, pass: string) => Promise<void>;
   loginWithGoogle: () => Promise<void>;
+  loginWithSimulatedGoogle: (name?: string, email?: string) => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   updateProfile: (updates: Partial<UserProfile>) => Promise<void>;
   logout: () => Promise<void>;
@@ -37,7 +39,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (user) {
       if (user.roles.includes('host') && !user.roles.includes('traveller')) {
         setActiveRole('host');
-      } else if (user.roles.includes('traveller')) {
+      } else if (user.roles.includes('traveller') && !user.roles.includes('host')) {
         setActiveRole('traveller');
       }
     }
@@ -82,6 +84,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const handleSimulatedGoogleLogin = async (name?: string, email?: string) => {
+    setLoading(true);
+    try {
+      const gUser = await loginWithSimulatedGoogle(name, email);
+      setUser(gUser);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const resetPassword = async (email: string) => {
     await resetUserPassword(email);
   };
@@ -107,6 +119,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         signUp,
         login,
         loginWithGoogle: handleGoogleLogin,
+        loginWithSimulatedGoogle: handleSimulatedGoogleLogin,
         resetPassword,
         updateProfile,
         logout,

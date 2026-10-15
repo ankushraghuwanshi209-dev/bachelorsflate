@@ -45,22 +45,6 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, onOpenLegal }) => {
                   onClick={() => onNavigate('search')}
                   className="hover:text-white transition-colors"
                 >
-                  Half-Day Rooms (4–6 Hours)
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() => onNavigate('search')}
-                  className="hover:text-white transition-colors"
-                >
-                  Full-Day Micro Stays
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() => onNavigate('search')}
-                  className="hover:text-white transition-colors"
-                >
                   Rooms Near Exam Centres & Stations
                 </button>
               </li>

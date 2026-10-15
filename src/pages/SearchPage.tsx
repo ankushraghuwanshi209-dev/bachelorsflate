@@ -9,20 +9,26 @@ import {
   Sparkles,
   SlidersHorizontal,
   X,
-  Bath
+  Bath,
+  Lock,
+  LogIn,
+  ShieldCheck
 } from 'lucide-react';
 import type { RoomListing, SearchFilters, StayDurationType, BathroomType } from '../types';
 import { getPublicRooms } from '../services/roomService';
 import { RoomCard } from '../components/RoomCard';
+import { useAuth } from '../context/AuthContext';
 
 interface SearchPageProps {
   initialSearch?: string; // JSON string of { city, duration }
   onSelectRoom: (roomId: string) => void;
+  onRequireAuth?: () => void;
 }
 
 const CITIES = ['All Cities', 'New Delhi', 'Bengaluru', 'Mumbai', 'Pune', 'Hyderabad', 'Kota', 'Jaipur', 'Chennai'];
 
-export const SearchPage: React.FC<SearchPageProps> = ({ initialSearch, onSelectRoom }) => {
+export const SearchPage: React.FC<SearchPageProps> = ({ initialSearch, onSelectRoom, onRequireAuth }) => {
+  const { user } = useAuth();
   const [rooms, setRooms] = useState<RoomListing[]>([]);
   const [loading, setLoading] = useState(true);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
@@ -68,8 +74,12 @@ export const SearchPage: React.FC<SearchPageProps> = ({ initialSearch, onSelectR
   };
 
   useEffect(() => {
-    fetchFilteredRooms();
-  }, [city, neighbourhood, bathroomType, nearLandmark, maxPrice]);
+    if (user) {
+      fetchFilteredRooms();
+    } else {
+      setLoading(false);
+    }
+  }, [user, city, neighbourhood, bathroomType, nearLandmark, maxPrice]);
 
   const resetFilters = () => {
     setCity('All Cities');
@@ -88,8 +98,54 @@ export const SearchPage: React.FC<SearchPageProps> = ({ initialSearch, onSelectR
     nearLandmark !== '' ||
     maxPrice < 1500;
 
+  // AUTH GUARD: User without login cannot view rooms
+  if (!user) {
+    return (
+      <div className="max-w-md mx-auto px-4 py-16 text-center space-y-6">
+        <div className="w-16 h-16 rounded-3xl bg-teal-50 border border-teal-200 text-teal-700 flex items-center justify-center mx-auto shadow-sm">
+          <Lock className="w-8 h-8 text-teal-600" />
+        </div>
+
+        <div className="space-y-2">
+          <div className="inline-flex items-center gap-1.5 text-xs font-bold text-teal-700 bg-teal-50 px-3 py-1 rounded-full border border-teal-100">
+            <ShieldCheck className="w-3.5 h-3.5" />
+            Members Only Access
+          </div>
+          <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
+            Log In to View Rooms
+          </h1>
+          <p className="text-xs text-slate-600 leading-relaxed max-w-sm mx-auto">
+            To protect host security and the privacy of our student & traveller community, room listings, photos, and exact prices are accessible only to registered members.
+          </p>
+        </div>
+
+        <div className="flex flex-col gap-3 pt-2 max-w-xs mx-auto">
+          <button
+            onClick={onRequireAuth}
+            className="w-full py-3 px-6 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2"
+          >
+            <LogIn className="w-4 h-4" />
+            <span>Sign In to Account</span>
+          </button>
+          <button
+            onClick={onRequireAuth}
+            className="w-full py-3 px-6 bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 rounded-xl text-xs font-bold shadow-sm transition-all"
+          >
+            Create Free Account
+          </button>
+        </div>
+
+        <div className="pt-6 border-t border-slate-100 grid grid-cols-3 gap-2 text-[11px] text-slate-500">
+          <div>🔒 Private Hosts</div>
+          <div>⚡ Hourly Naps</div>
+          <div>✓ Zero Advance Fee</div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-5">
       {/* Title & Mobile Filter Toggle */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200">
         <div>
@@ -114,12 +170,29 @@ export const SearchPage: React.FC<SearchPageProps> = ({ initialSearch, onSelectR
 
           <button
             onClick={() => setShowMobileFilters(!showMobileFilters)}
-            className="md:hidden flex items-center gap-1.5 px-3 py-2 bg-slate-900 text-white rounded-xl text-xs font-bold"
+            className="md:hidden flex items-center gap-1.5 px-3.5 py-2 bg-slate-900 text-white rounded-xl text-xs font-bold shadow-sm"
           >
             <SlidersHorizontal className="w-3.5 h-3.5" />
             Filters {hasActiveFilters && '•'}
           </button>
         </div>
+      </div>
+
+      {/* Quick City Chips (Mobile & Desktop) */}
+      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+        {CITIES.map((c) => (
+          <button
+            key={c}
+            onClick={() => setCity(c)}
+            className={`px-3 py-1.5 rounded-full font-bold whitespace-nowrap transition-all ${
+              city === c
+                ? 'bg-brand-600 text-white shadow-sm'
+                : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+            }`}
+          >
+            {c}
+          </button>
+        ))}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
@@ -205,8 +278,6 @@ export const SearchPage: React.FC<SearchPageProps> = ({ initialSearch, onSelectR
                 {[
                   { value: 'any', label: 'Any Duration' },
                   { value: '2-3_hours', label: '2–3 Hours (Quick Nap)' },
-                  { value: '4-6_hours', label: '4–6 Hours (Study / Exam)' },
-                  { value: 'full_day', label: 'Full Day' },
                 ].map((item) => (
                   <label
                     key={item.value}

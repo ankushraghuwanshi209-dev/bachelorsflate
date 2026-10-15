@@ -42,7 +42,7 @@ function rowToRoom(
     bathroomType: row.bathroom_type || 'attached',
     nearbyLandmark: row.nearby_landmark || '',
     houseRules: row.house_rules || [],
-    pricing: row.pricing || { hourly: 100, twoToThreeHours: 350, fourToSixHours: 600, fullDay: 1200 },
+    pricing: row.pricing || { hourly: 100, twoToThreeHours: 350 },
     minStayHours: row.min_stay_hours ?? 2,
     maxStayHours: row.max_stay_hours ?? 24,
     availableTimes: row.available_times || '07:00 AM - 10:00 PM',

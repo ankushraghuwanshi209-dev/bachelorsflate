@@ -15,7 +15,9 @@ import {
   RotateCcw,
   Navigation,
   Copy,
-  Info
+  Info,
+  Layers,
+  Sparkles
 } from 'lucide-react';
 import type { BookingRequest, BookingStatus } from '../types';
 import { getTravellerBookings, updateBookingStatus } from '../services/bookingService';
@@ -27,14 +29,16 @@ interface TravellerDashboardPageProps {
   highlightBookingId?: string;
   onNavigateToRoom: (roomId: string) => void;
   onNavigateToSearch: () => void;
+  onNavigate?: (view: string, param?: string) => void;
 }
 
 export const TravellerDashboardPage: React.FC<TravellerDashboardPageProps> = ({
   highlightBookingId,
   onNavigateToRoom,
   onNavigateToSearch,
+  onNavigate,
 }) => {
-  const { user } = useAuth();
+  const { user, activeRole, setActiveRole, updateProfile } = useAuth();
   const { success, error, info } = useToast();
 
   const [bookings, setBookings] = useState<BookingRequest[]>([]);
@@ -119,7 +123,38 @@ export const TravellerDashboardPage: React.FC<TravellerDashboardPageProps> = ({
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+      {/* Mode Switcher Pill */}
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-3 rounded-2xl border border-slate-200 shadow-sm">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-bold text-slate-500">Dashboard Mode:</span>
+          <div className="inline-flex items-center p-1 bg-slate-100 rounded-xl border border-slate-200">
+            <span className="px-3 py-1.5 rounded-lg text-xs font-bold bg-white text-slate-900 shadow-sm flex items-center gap-1.5">
+              <User className="w-3.5 h-3.5 text-brand-600" />
+              Traveller Mode (Active)
+            </span>
+            <button
+              type="button"
+              onClick={async () => {
+                if (!user?.roles.includes('host')) {
+                  await updateProfile({ roles: ['traveller', 'host'] });
+                }
+                setActiveRole('host');
+                onNavigate?.('host-dashboard');
+              }}
+              className="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-purple-700 hover:bg-white/60 flex items-center gap-1.5 transition-all"
+            >
+              <Layers className="w-3.5 h-3.5 text-purple-600" />
+              Switch to Host Mode
+            </button>
+          </div>
+        </div>
+
+        <span className="text-[11px] text-slate-500 font-medium">
+          💡 Room add karne ke liye upar <strong>Host Mode</strong> select karein.
+        </span>
+      </div>
+
       {/* Header Banner */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-200">
         <div>
