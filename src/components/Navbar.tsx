@@ -65,6 +65,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate }) => {
   };
 
   const hasBothRoles = user?.roles.includes('traveller') && user?.roles.includes('host');
+  const isDashboard = currentView === 'host-dashboard' || currentView === 'traveller-dashboard';
 
   return (
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 transition-all">
@@ -118,7 +119,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate }) => {
             </button>
 
             {/* Quick role toggle pill if logged in */}
-            {user && (
+            {user && !isDashboard && (
               <button
                 onClick={handleRoleToggle}
                 className={`ml-2 px-3 py-1.5 rounded-full text-xs font-semibold border flex items-center gap-1.5 transition-all ${
@@ -202,7 +203,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate }) => {
                         <Layers className="w-4 h-4 text-purple-600" />
                         Host Dashboard & Listings
                       </button>
-                    ) : (
+                      ) : !isDashboard ? (
                       <button
                         onClick={handleRoleToggle}
                         className="w-full text-left px-4 py-2 hover:bg-slate-50 flex items-center gap-2 text-xs font-medium text-slate-600"
@@ -210,7 +211,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate }) => {
                         <Layers className="w-4 h-4 text-slate-400" />
                         Switch to Host Mode
                       </button>
-                    )}
+                      ) : null}
 
                     <button
                       onClick={() => handleNav('profile')}
@@ -259,14 +260,14 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate }) => {
               >
                 Log In
               </button>
-            ) : (
+            ) : user && !isDashboard ? (
               <button
                 onClick={handleRoleToggle}
                 className="px-2.5 py-1 rounded-full text-[11px] font-bold border bg-teal-50 text-teal-800 border-teal-200"
               >
                 {activeRole === 'host' ? 'Host' : 'Traveller'}
               </button>
-            )}
+            ) : null}
 
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -293,12 +294,14 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate }) => {
                 <p className="font-bold text-slate-900 text-sm truncate">{user.displayName}</p>
                 <p className="text-xs text-slate-500 truncate">{user.email}</p>
               </div>
-              <button
-                onClick={handleRoleToggle}
-                className="text-[11px] font-bold px-2 py-1 bg-white border border-slate-200 rounded-lg text-slate-700 shadow-sm"
-              >
-                Switch Role
-              </button>
+              {!isDashboard && (
+                <button
+                  onClick={handleRoleToggle}
+                  className="text-[11px] font-bold px-2 py-1 bg-white border border-slate-200 rounded-lg text-slate-700 shadow-sm"
+                >
+                  Switch Role
+                </button>
+              )}
             </div>
           )}
 
@@ -344,7 +347,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate }) => {
                   <Layers className="w-4 h-4 text-purple-600" />
                   Host Dashboard & Rooms
                 </button>
-              ) : (
+              ) : !isDashboard ? (
                 <button
                   onClick={handleRoleToggle}
                   className="w-full text-left px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-2.5"
@@ -352,7 +355,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate }) => {
                   <Layers className="w-4 h-4 text-slate-500" />
                   Switch to Host Mode
                 </button>
-              )}
+              ) : null}
 
               <button
                 onClick={() => handleNav('profile')}

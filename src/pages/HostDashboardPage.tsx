@@ -346,7 +346,7 @@ export const HostDashboardPage: React.FC<HostDashboardPageProps> = ({
         <div className="space-y-2">
           <h2 className="text-2xl font-extrabold text-slate-900">Aap abhi Traveller Mode me hain</h2>
           <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
-            "Add Room" aur room listing options sirf <strong>Host Mode</strong> me available hain. Host Mode activate karne ke liye top navigation ka mode switch use karein.
+            "Add Room" aur room listing options sirf <strong>Host Mode</strong> me available hain. Host Mode activate karne ke liye Home par jaakar mode switch use karein.
           </p>
         </div>
         <div className="flex justify-center pt-2">
