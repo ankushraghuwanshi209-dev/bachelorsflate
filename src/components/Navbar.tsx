@@ -82,19 +82,21 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate }) => {
           {/* Brand Logo */}
           <div
             onClick={() => handleNav('home')}
-            className="flex items-center gap-2.5 cursor-pointer group select-none"
+            className="flex items-center gap-2 sm:gap-2.5 cursor-pointer group select-none min-w-0"
           >
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-teal-400 flex items-center justify-center text-white shadow-md shadow-brand-500/20 group-hover:scale-105 transition-transform">
-              <Home className="w-5 h-5 stroke-[2.2]" />
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-teal-400 flex items-center justify-center text-white shadow-md shadow-brand-500/20 group-hover:scale-105 transition-transform flex-shrink-0">
+              <Home className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.2]" />
             </div>
-            <div>
-              <span className="font-extrabold text-lg sm:text-xl text-slate-900 tracking-tight flex items-center gap-1.5">
-                Bachelors Flat
-                <span className="text-[10px] uppercase tracking-wider bg-brand-50 text-brand-700 font-bold px-1.5 py-0.5 rounded border border-brand-200">
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5 flex-nowrap">
+                <span className="font-extrabold text-base sm:text-xl text-slate-900 tracking-tight whitespace-nowrap">
+                  Bachelors Flat
+                </span>
+                <span className="text-[10px] uppercase tracking-wider bg-brand-50 text-brand-700 font-bold px-1.5 py-0.5 rounded border border-brand-200 whitespace-nowrap">
                   Micro-Stays
                 </span>
-              </span>
-              <p className="text-[11px] text-slate-500 hidden sm:block font-medium -mt-0.5">
+              </div>
+              <p className="text-[11px] text-slate-500 hidden sm:block font-medium -mt-0.5 whitespace-nowrap">
                 A little space to call your own
               </p>
             </div>
@@ -268,33 +270,19 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate }) => {
           </div>
 
           {/* Mobile menu toggle & quick login */}
-          <div className="flex md:hidden items-center gap-2">
-            {!user ? (
+          <div className="flex md:hidden items-center gap-1.5 flex-shrink-0">
+            {!user && (
               <button
                 onClick={() => handleNav('login')}
-                className="px-3 py-1.5 text-xs font-bold text-brand-700 bg-brand-50 border border-brand-200 rounded-xl"
+                className="px-2.5 py-1 text-xs font-bold text-brand-700 bg-brand-50 border border-brand-200 rounded-lg whitespace-nowrap"
               >
                 Log In
               </button>
-            ) : !isDashboard ? (
-              <button
-                onClick={handleRoleToggle}
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border transition-all active:scale-95 shadow-xs ${
-                  activeRole === 'host'
-                    ? 'bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100'
-                    : 'bg-teal-50 text-teal-700 border-teal-200 hover:bg-teal-100'
-                }`}
-                title={`Switch to ${activeRole === 'host' ? 'Traveller' : 'Host'} mode`}
-                aria-label="Switch mode"
-              >
-                <ArrowRightLeft className="w-3 h-3 opacity-60" />
-                <span className="capitalize text-[11px] font-bold">{activeRole}</span>
-              </button>
-            ) : null}
+            )}
 
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+              className="p-2 rounded-xl text-slate-700 hover:text-slate-900 hover:bg-slate-100 transition-colors"
               aria-label="Toggle Navigation Menu"
             >
               {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
