@@ -59,9 +59,23 @@ CREATE TABLE IF NOT EXISTS public.rooms (
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
-
+-- Ensure candidate_allowance exists and adheres to constraints on existing tables
 ALTER TABLE public.rooms
-  ADD COLUMN IF NOT EXISTS candidate_allowance INTEGER NOT NULL DEFAULT 1 CHECK (candidate_allowance > 0);
+  ADD COLUMN IF NOT EXISTS candidate_allowance INTEGER NOT NULL DEFAULT 1;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint
+    WHERE conname = 'rooms_candidate_allowance_check'
+  ) THEN
+    ALTER TABLE public.rooms
+      ADD CONSTRAINT rooms_candidate_allowance_check CHECK (candidate_allowance > 0);
+  END IF;
+END $$;
+
+COMMENT ON COLUMN public.rooms.candidate_allowance IS 'Maximum number of exam candidates/travellers allowed to stay in the room simultaneously.';
 
 -- 5. Create room_private table (Host only: Exact address & check-in details)
 CREATE TABLE IF NOT EXISTS public.room_private (
@@ -325,3 +339,6 @@ CREATE POLICY "Users can delete their own room photos" ON storage.objects
     bucket_id = 'room-photos' AND
     (storage.foldername(name))[1] = auth.uid()::text
   );
+
+-- Reload PostgREST schema cache
+NOTIFY pgrst, 'reload schema';
