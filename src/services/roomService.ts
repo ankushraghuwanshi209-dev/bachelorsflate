@@ -5,7 +5,11 @@ const STORAGE_KEY = 'bachelors_flat_rooms';
 
 export function sanitizePublicRoom(room: RoomListing): RoomListing {
   const { privateDetails: _privateDetails, ...publicRoom } = room;
-  return publicRoom;
+  return {
+    ...publicRoom,
+    approxLocation: '',
+    nearbyLandmark: '',
+  };
 }
 
 function normalizeLocalRoom(room: RoomListing): RoomListing {

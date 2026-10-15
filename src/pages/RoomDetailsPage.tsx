@@ -13,7 +13,6 @@ import {
   Share2,
   Users,
   Sparkles,
-  GraduationCap,
   Info,
   Check
 } from 'lucide-react';
@@ -177,12 +176,6 @@ export const RoomDetailsPage: React.FC<RoomDetailsPageProps> = ({
           <span className="bg-teal-50 text-teal-800 text-[11px] font-bold px-2.5 py-0.5 rounded-full border border-teal-200">
             {room.bathroomType === 'attached' ? 'Attached Bathroom' : 'Clean Bathroom Access'}
           </span>
-          {room.nearbyLandmark && (
-            <span className="bg-slate-100 text-slate-700 text-[11px] font-medium px-2.5 py-0.5 rounded-full flex items-center gap-1">
-              <GraduationCap className="w-3 h-3 text-brand-600" />
-              {room.nearbyLandmark}
-            </span>
-          )}
         </div>
 
         <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 tracking-tight leading-snug">
@@ -277,27 +270,6 @@ export const RoomDetailsPage: React.FC<RoomDetailsPageProps> = ({
             <p className="text-xs sm:text-sm text-slate-600 leading-relaxed whitespace-pre-line">
               {room.description}
             </p>
-          </div>
-
-          {/* Approximate Area & Transit Proximity */}
-          <div className="bg-slate-50 border border-slate-200 rounded-3xl p-6 space-y-3">
-            <div className="flex items-center gap-2">
-              <MapPin className="w-4 h-4 text-brand-600" />
-              <h3 className="font-bold text-sm text-slate-900">Approximate Location & Transit Access</h3>
-            </div>
-            <p className="text-xs text-slate-700 leading-relaxed">
-              <strong>General Area:</strong> {room.approxLocation}
-            </p>
-            {room.nearbyLandmark && (
-              <p className="text-xs text-slate-600">
-                <strong>Nearby Hub:</strong> {room.nearbyLandmark}
-              </p>
-            )}
-            <div className="h-32 bg-slate-200/70 rounded-2xl border border-slate-300/80 flex flex-col items-center justify-center text-center p-4 text-slate-500 space-y-1">
-              <MapPin className="w-6 h-6 text-brand-600 animate-bounce" />
-              <span className="text-xs font-bold text-slate-700">{room.neighbourhood}, {room.city}</span>
-              <span className="text-[11px] text-slate-500">Interactive map & navigation pinpoint provided after booking confirmation</span>
-            </div>
           </div>
 
           {/* Amenities */}

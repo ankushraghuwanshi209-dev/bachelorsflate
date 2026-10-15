@@ -8,7 +8,6 @@ import {
   ChevronLeft,
   ChevronRight,
   ShieldAlert,
-  GraduationCap
 } from 'lucide-react';
 import type { RoomListing } from '../types';
 
@@ -105,14 +104,6 @@ export const RoomCard: React.FC<RoomCardProps> = ({ room, onSelect }) => {
           <h3 className="font-bold text-slate-900 text-base leading-snug line-clamp-2 group-hover:text-teal-700 transition-colors mb-2">
             {room.title}
           </h3>
-
-          {/* Nearby Exam/Transit Landmark Badge */}
-          {room.nearbyLandmark && (
-            <div className="inline-flex items-center gap-1.5 bg-slate-50 border border-slate-200/80 text-slate-700 text-xs px-2.5 py-1 rounded-lg mb-3">
-              <GraduationCap className="w-3.5 h-3.5 text-brand-600 flex-shrink-0" />
-              <span className="truncate font-medium">{room.nearbyLandmark}</span>
-            </div>
-          )}
 
           {/* Amenities & Bathroom Badge */}
           <div className="flex flex-wrap items-center gap-1.5 mb-4 text-xs text-slate-600">

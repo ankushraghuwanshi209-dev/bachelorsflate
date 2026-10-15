@@ -71,10 +71,8 @@ export const HostDashboardPage: React.FC<HostDashboardPageProps> = ({
   const [description, setDescription] = useState('');
   const [city, setCity] = useState('New Delhi');
   const [neighbourhood, setNeighbourhood] = useState('');
-  const [approxLocation, setApproxLocation] = useState('');
   const [exactAddress, setExactAddress] = useState('');
   const [checkInInstructions, setCheckInInstructions] = useState('');
-  const [nearbyLandmark, setNearbyLandmark] = useState('');
   const [bathroomType, setBathroomType] = useState<BathroomType>('attached');
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>([
     'High-Speed WiFi',
@@ -128,10 +126,8 @@ export const HostDashboardPage: React.FC<HostDashboardPageProps> = ({
     setDescription('');
     setCity('New Delhi');
     setNeighbourhood('');
-    setApproxLocation('');
     setExactAddress('');
-    setCheckInInstructions('');
-    setNearbyLandmark('');
+    setCheckInInstructions('Welcome! Ring bell upon arrival.');
     setBathroomType('attached');
     setSelectedAmenities([
       'High-Speed WiFi',
@@ -158,10 +154,8 @@ export const HostDashboardPage: React.FC<HostDashboardPageProps> = ({
     setDescription(room.description);
     setCity(room.city);
     setNeighbourhood(room.neighbourhood);
-    setApproxLocation(room.approxLocation);
     setExactAddress(room.privateDetails?.exactAddress || '');
     setCheckInInstructions(room.privateDetails?.checkInInstructions || '');
-    setNearbyLandmark(room.nearbyLandmark || '');
     setBathroomType(room.bathroomType);
     setSelectedAmenities(room.amenities || []);
     setHouseRulesText(room.houseRules?.join('\n') || '');
@@ -222,7 +216,7 @@ export const HostDashboardPage: React.FC<HostDashboardPageProps> = ({
     e.preventDefault();
     if (!user) return;
     if (!title.trim() || !city.trim() || !neighbourhood.trim() || !exactAddress.trim()) {
-      error('Please fill in all required title, location, and exact address fields.');
+      error('Please fill in the required title, city, area/neighbourhood, and exact address fields.');
       return;
     }
     if (photos.length === 0) {
@@ -246,10 +240,13 @@ export const HostDashboardPage: React.FC<HostDashboardPageProps> = ({
         description: description.trim(),
         city: city.trim(),
         neighbourhood: neighbourhood.trim(),
-        approxLocation: approxLocation.trim() || `Near ${neighbourhood}, ${city}`,
-        exactAddress: exactAddress.trim(),
-        checkInInstructions: checkInInstructions.trim() || 'Welcome! Ring bell upon arrival.',
-        nearbyLandmark: nearbyLandmark.trim(),
+        approxLocation: '',
+        nearbyLandmark: '',
+        privateDetails: {
+          exactAddress: exactAddress.trim(),
+          checkInInstructions: checkInInstructions.trim() || 'Welcome! Ring bell upon arrival.',
+          hostPhone: user.phoneNumber,
+        },
         bathroomType,
         amenities: selectedAmenities,
         houseRules,
@@ -265,7 +262,7 @@ export const HostDashboardPage: React.FC<HostDashboardPageProps> = ({
       };
 
       if (editingRoomId) {
-        await updateRoom(editingRoomId, roomPayload);
+        await updateRoom(editingRoomId, roomPayload, user.uid);
         success('Room listing updated successfully!');
       } else {
         await createRoom(roomPayload);
@@ -723,7 +720,7 @@ export const HostDashboardPage: React.FC<HostDashboardPageProps> = ({
             </div>
           </div>
 
-          {/* Public vs Private Location Fields */}
+          {/* Location Fields */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1">
@@ -741,7 +738,7 @@ export const HostDashboardPage: React.FC<HostDashboardPageProps> = ({
 
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1">
-                Neighbourhood / Sector *
+                Area / Neighbourhood *
               </label>
               <input
                 type="text"
@@ -753,34 +750,6 @@ export const HostDashboardPage: React.FC<HostDashboardPageProps> = ({
               />
             </div>
 
-            <div className="sm:col-span-2">
-              <label className="block text-xs font-bold text-slate-700 mb-1">
-                Public Approximate Map Marker / Description
-              </label>
-              <input
-                type="text"
-                placeholder="E.g., Within 400m of Metro Gate 3, Near Pearson VUE test centre"
-                value={approxLocation}
-                onChange={(e) => setApproxLocation(e.target.value)}
-                className="w-full text-xs font-medium px-3 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500"
-              />
-              <p className="text-[10px] text-slate-400 mt-0.5">
-                This general area note is visible to searchers. Do not enter house/flat numbers here.
-              </p>
-            </div>
-
-            <div className="sm:col-span-2">
-              <label className="block text-xs font-bold text-slate-700 mb-1">
-                Nearby Station or Exam Centre Landmark
-              </label>
-              <input
-                type="text"
-                placeholder="E.g., 300m to TCS iON Digital Zone / Central Metro"
-                value={nearbyLandmark}
-                onChange={(e) => setNearbyLandmark(e.target.value)}
-                className="w-full text-xs font-medium px-3 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500"
-              />
-            </div>
           </div>
 
           {/* Strictly Private Fields */}
@@ -804,18 +773,6 @@ export const HostDashboardPage: React.FC<HostDashboardPageProps> = ({
               />
             </div>
 
-            <div>
-              <label className="block text-xs font-bold text-slate-900 mb-1">
-                Check-in Door & Arrival Instructions
-              </label>
-              <textarea
-                rows={2}
-                placeholder="E.g., Ring bell 302 on 3rd floor. Caretaker Sunil will hand over the key. Wi-Fi code is on the study desk."
-                value={checkInInstructions}
-                onChange={(e) => setCheckInInstructions(e.target.value)}
-                className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
-              />
-            </div>
           </div>
 
           {/* Pricing & Duration Settings */}
