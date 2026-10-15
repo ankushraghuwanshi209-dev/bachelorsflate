@@ -56,6 +56,9 @@ function rowToRoom(
     photos: row.photos || [],
     status: row.status as RoomStatus,
     isDemo: Boolean(row.is_demo),
+    termsAgreed: Boolean(row.terms_agreed ?? true),
+    termsAgreedAt: row.terms_agreed_at || undefined,
+    termsVersion: row.terms_version || undefined,
     createdAt: row.created_at || new Date().toISOString(),
     updatedAt: row.updated_at || new Date().toISOString(),
     privateDetails,
@@ -299,6 +302,10 @@ export async function createRoom(
     throw new Error('Candidate allowance must be a positive whole number.');
   }
 
+  if (!data.termsAgreed) {
+    throw new Error('Host authorization and community terms agreement are required before publishing a room.');
+  }
+
   const currentHost =
     host ||
     (() => {
@@ -327,13 +334,16 @@ export async function createRoom(
     reviewCount: 0,
     status: data.status || 'active',
     isDemo: false,
+    termsAgreed: true,
+    termsAgreedAt: data.termsAgreedAt || now,
+    termsVersion: data.termsVersion || '2026-10-v1',
     createdAt: now,
     updatedAt: now,
   };
 
   if (isSupabaseConfigured && supabase) {
     try {
-      const roomRow = {
+      const roomRow: Record<string, any> = {
         id: newId,
         host_id: currentHost.uid,
         host_name: currentHost.displayName,
@@ -357,11 +367,19 @@ export async function createRoom(
         photos: newRoom.photos,
         status: newRoom.status,
         is_demo: false,
+        terms_agreed: true,
+        terms_agreed_at: newRoom.termsAgreedAt,
+        terms_version: newRoom.termsVersion,
         created_at: now,
         updated_at: now,
       };
 
-      const { error: roomErr } = await supabase.from('rooms').insert(roomRow);
+      let { error: roomErr } = await supabase.from('rooms').insert(roomRow);
+      if (roomErr && roomErr.message?.includes('terms_agreed')) {
+        const { terms_agreed, terms_agreed_at, terms_version, ...fallbackRow } = roomRow;
+        const retry = await supabase.from('rooms').insert(fallbackRow);
+        roomErr = retry.error;
+      }
       if (roomErr) throw roomErr;
 
       if (data.privateDetails) {
@@ -425,8 +443,20 @@ export async function updateRoom(
       if (updates.availableTimes !== undefined) roomRowUpdates.available_times = updates.availableTimes;
       if (updates.photos !== undefined) roomRowUpdates.photos = updates.photos;
       if (updates.status !== undefined) roomRowUpdates.status = updates.status;
+      if (updates.termsAgreed !== undefined) roomRowUpdates.terms_agreed = updates.termsAgreed;
+      if (updates.termsAgreedAt !== undefined) roomRowUpdates.terms_agreed_at = updates.termsAgreedAt;
+      if (updates.termsVersion !== undefined) roomRowUpdates.terms_version = updates.termsVersion;
 
-      await supabase.from('rooms').update(roomRowUpdates).eq('id', roomId);
+      try {
+        await supabase.from('rooms').update(roomRowUpdates).eq('id', roomId);
+      } catch (updErr: any) {
+        if (updErr?.message?.includes('terms_agreed')) {
+          const { terms_agreed, terms_agreed_at, terms_version, ...fallbackUpdates } = roomRowUpdates;
+          await supabase.from('rooms').update(fallbackUpdates).eq('id', roomId);
+        } else {
+          throw updErr;
+        }
+      }
 
       if (updates.privateDetails && hostUid) {
         await supabase.from('room_private').upsert({

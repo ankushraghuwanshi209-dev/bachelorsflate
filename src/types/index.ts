@@ -67,6 +67,9 @@ export interface RoomListing {
   photos: string[];
   status: RoomStatus;
   isDemo?: boolean;       // Clearly labelled as demo content
+  termsAgreed?: boolean;  // Host confirmed authorization, accuracy, and non-discrimination
+  termsAgreedAt?: string;
+  termsVersion?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -94,6 +97,11 @@ export interface BookingRequest {
   message?: string;
   status: BookingStatus;
   totalPrice: number;
+  termsAgreed?: boolean;
+  termsAgreedAt?: string;
+  termsVersion?: string;
+  rulesAgreed?: boolean;
+  idVerificationAgreed?: boolean;
   privateDetails?: BookingPrivateDetails;
   createdAt: string;
   updatedAt: string;

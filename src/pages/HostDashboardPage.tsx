@@ -21,6 +21,7 @@ import {
   GraduationCap,
   Sparkles,
   DollarSign,
+  Info,
 } from 'lucide-react';
 import type { RoomListing, BookingRequest, RoomStatus, BathroomType } from '../types';
 import { getHostRooms, createRoom, updateRoom, deleteRoom } from '../services/roomService';
@@ -90,6 +91,7 @@ export const HostDashboardPage: React.FC<HostDashboardPageProps> = ({
   const [maxStayHours, setMaxStayHours] = useState(24);
   const [price2to3, setPrice2to3] = useState('');
   const [roomStatus, setRoomStatus] = useState<RoomStatus>('active');
+  const [hostConsent, setHostConsent] = useState(false);
 
   // Photo uploads
   const [photos, setPhotos] = useState<string[]>([
@@ -144,6 +146,7 @@ export const HostDashboardPage: React.FC<HostDashboardPageProps> = ({
     setAvailableTimes('07:00 AM - 10:00 PM');
     setPrice2to3('');
     setRoomStatus('active');
+    setHostConsent(false);
     setPhotos([
       'https://images.unsplash.com/photo-1598928506311-c55ded91a20c?auto=format&fit=crop&w=1000&q=80'
     ]);
@@ -167,6 +170,7 @@ export const HostDashboardPage: React.FC<HostDashboardPageProps> = ({
     setMaxStayHours(room.maxStayHours);
     setPrice2to3(String(room.pricing.twoToThreeHours));
     setRoomStatus(room.status);
+    setHostConsent(room.termsAgreed ?? true);
     setPhotos(room.photos || []);
     setActiveTab('form');
   };
@@ -237,6 +241,11 @@ export const HostDashboardPage: React.FC<HostDashboardPageProps> = ({
       return;
     }
 
+    if (!hostConsent) {
+      error('Please review and agree to the Host Authorization & Community Safety Standards before publishing.');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const houseRules = houseRulesText
@@ -273,6 +282,9 @@ export const HostDashboardPage: React.FC<HostDashboardPageProps> = ({
         availableTimes: availableTimes.trim(),
         photos,
         status: roomStatus,
+        termsAgreed: true,
+        termsAgreedAt: new Date().toISOString(),
+        termsVersion: '2026-10-v1',
       };
 
       if (editingRoomId) {
@@ -640,6 +652,19 @@ export const HostDashboardPage: React.FC<HostDashboardPageProps> = ({
                       </div>
                     )}
 
+                    {/* Consent status & Physical ID check reminder */}
+                    <div className="flex flex-wrap items-center gap-2 text-[11px] text-teal-800 bg-teal-50 px-3 py-1.5 rounded-xl border border-teal-200">
+                      <ShieldCheck className="w-3.5 h-3.5 text-teal-600 flex-shrink-0" />
+                      <span>Traveller consented to House Rules, Conduct Standards & In-Person ID Check</span>
+                    </div>
+
+                    {isAccepted && (
+                      <div className="bg-slate-50 border border-slate-200 p-2.5 rounded-xl text-[11px] text-slate-600 flex items-start gap-2">
+                        <Info className="w-3.5 h-3.5 text-brand-600 flex-shrink-0 mt-0.5" />
+                        <span>Host Check-in Responsibility: Verify the traveller's physical government-issued ID upon arrival. Never upload, photograph, or retain digital copies of personal IDs.</span>
+                      </div>
+                    )}
+
                     {/* Action buttons */}
                     <div className="pt-2 flex flex-wrap items-center justify-between gap-3">
                       <p className="text-[11px] text-slate-400">
@@ -987,6 +1012,50 @@ export const HostDashboardPage: React.FC<HostDashboardPageProps> = ({
                 </div>
               </div>
             )}
+          </div>
+
+          {/* Host Terms & Community Standards Consent */}
+          <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 sm:p-5 space-y-4">
+            <div className="flex items-center gap-2 text-slate-900 font-bold text-xs uppercase tracking-wider">
+              <ShieldCheck className="w-4 h-4 text-brand-600" />
+              Host Confirmation & Community Safety Commitment
+            </div>
+
+            <div className="text-xs text-slate-600 space-y-2 leading-relaxed bg-white p-4 rounded-xl border border-slate-200">
+              <p className="font-semibold text-slate-800">
+                Before publishing this room, please confirm the following hosting commitments:
+              </p>
+              <ul className="list-disc list-inside space-y-1.5 text-slate-700 font-medium text-[11px]">
+                <li>
+                  <strong>Authorization & Truthfulness:</strong> You confirm that you are authorized to list this space and that all listing information, photos, pricing, and amenities are accurate.
+                </li>
+                <li>
+                  <strong>Space Delivery & Lawful Conduct:</strong> You will provide the room in clean, safe condition as described, and comply with all applicable local laws and regulations.
+                </li>
+                <li>
+                  <strong>Zero Tolerance for Harm:</strong> You must treat all guests with dignity and respect, and must not discriminate against, threaten, harass, or harm any travellers.
+                </li>
+                <li>
+                  <strong>House Rules & In-Person ID:</strong> Your house rules will be shown to travellers before they request a booking. You agree to inspect government IDs in person at check-in and protect guest privacy.
+                </li>
+              </ul>
+              <p className="text-[10px] text-slate-400 pt-2 border-t border-slate-100">
+                Notice: These terms define the host's personal confirmation and responsibility; they do not constitute a legal guarantee or warranty against third-party occurrences. Platform operators should review final phrasing with local legal counsel.
+              </p>
+            </div>
+
+            <label className="flex items-start gap-3 cursor-pointer select-none p-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition-colors">
+              <input
+                type="checkbox"
+                required
+                checked={hostConsent}
+                onChange={(e) => setHostConsent(e.target.checked)}
+                className="mt-0.5 w-4 h-4 text-brand-600 rounded border-slate-300 focus:ring-brand-500"
+              />
+              <span className="text-xs font-semibold text-slate-800 leading-snug">
+                I confirm that I am authorized to list this space, all listing details are accurate, I will provide the room as described in compliance with applicable laws, and I will not discriminate, threaten, harass, or harm any travellers. *
+              </span>
+            </label>
           </div>
 
           {/* Listing Status & Submit */}

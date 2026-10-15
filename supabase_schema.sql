@@ -56,12 +56,18 @@ CREATE TABLE IF NOT EXISTS public.rooms (
   photos TEXT[] DEFAULT ARRAY[]::TEXT[],
   status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'draft', 'paused')),
   is_demo BOOLEAN DEFAULT false,
+  terms_agreed BOOLEAN NOT NULL DEFAULT true,
+  terms_agreed_at TIMESTAMPTZ DEFAULT NOW(),
+  terms_version TEXT DEFAULT '2026-10-v1',
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
--- Ensure candidate_allowance exists and adheres to constraints on existing tables
+-- Ensure candidate_allowance and terms columns exist on existing tables
 ALTER TABLE public.rooms
-  ADD COLUMN IF NOT EXISTS candidate_allowance INTEGER NOT NULL DEFAULT 1;
+  ADD COLUMN IF NOT EXISTS candidate_allowance INTEGER NOT NULL DEFAULT 1,
+  ADD COLUMN IF NOT EXISTS terms_agreed BOOLEAN NOT NULL DEFAULT true,
+  ADD COLUMN IF NOT EXISTS terms_agreed_at TIMESTAMPTZ DEFAULT NOW(),
+  ADD COLUMN IF NOT EXISTS terms_version TEXT DEFAULT '2026-10-v1';
 
 DO $$
 BEGIN
@@ -76,6 +82,8 @@ BEGIN
 END $$;
 
 COMMENT ON COLUMN public.rooms.candidate_allowance IS 'Maximum number of exam candidates/travellers allowed to stay in the room simultaneously.';
+COMMENT ON COLUMN public.rooms.terms_agreed IS 'Whether host confirmed authorization, accuracy, legal compliance, and non-discrimination.';
+
 
 -- 5. Create room_private table (Host only: Exact address & check-in details)
 CREATE TABLE IF NOT EXISTS public.room_private (
@@ -109,9 +117,26 @@ CREATE TABLE IF NOT EXISTS public.bookings (
   message TEXT,
   status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'declined', 'cancelled', 'completed')),
   total_price NUMERIC(10, 2) NOT NULL,
+  terms_agreed BOOLEAN NOT NULL DEFAULT true,
+  terms_agreed_at TIMESTAMPTZ DEFAULT NOW(),
+  terms_version TEXT DEFAULT '2026-10-v1',
+  rules_agreed BOOLEAN NOT NULL DEFAULT true,
+  id_verification_agreed BOOLEAN NOT NULL DEFAULT true,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Ensure terms and consent columns exist on existing bookings
+ALTER TABLE public.bookings
+  ADD COLUMN IF NOT EXISTS terms_agreed BOOLEAN NOT NULL DEFAULT true,
+  ADD COLUMN IF NOT EXISTS terms_agreed_at TIMESTAMPTZ DEFAULT NOW(),
+  ADD COLUMN IF NOT EXISTS terms_version TEXT DEFAULT '2026-10-v1',
+  ADD COLUMN IF NOT EXISTS rules_agreed BOOLEAN NOT NULL DEFAULT true,
+  ADD COLUMN IF NOT EXISTS id_verification_agreed BOOLEAN NOT NULL DEFAULT true;
+
+COMMENT ON COLUMN public.bookings.terms_agreed IS 'Whether traveller agreed to conduct standards, allowance limits, and safety terms.';
+COMMENT ON COLUMN public.bookings.rules_agreed IS 'Whether traveller confirmed reading and agreeing to host house rules.';
+COMMENT ON COLUMN public.bookings.id_verification_agreed IS 'Whether traveller agreed to provide in-person physical government ID verification to host.';
 
 -- 7. Create booking_private_details table (Unlocked only upon booking acceptance)
 CREATE TABLE IF NOT EXISTS public.booking_private_details (

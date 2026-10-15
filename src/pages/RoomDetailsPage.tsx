@@ -296,7 +296,16 @@ export const RoomDetailsPage: React.FC<RoomDetailsPageProps> = ({
           <div className="space-y-3">
             <h2 className="text-lg font-bold text-slate-900">House Rules & Aspirant Etiquette</h2>
             <div className="bg-white border border-slate-200 rounded-2xl p-4 divide-y divide-slate-100 text-xs text-slate-700">
-              {room.houseRules.map((rule, idx) => (
+              {(room.houseRules && room.houseRules.length > 0
+                ? room.houseRules
+                : [
+                    'Maintain a quiet, study-focused environment at all times',
+                    'Physical government-issued photo ID required upon check-in',
+                    `Candidate allowance strictly enforced (Maximum ${room.candidateAllowance} ${room.candidateAllowance === 1 ? 'traveller' : 'travellers'})`,
+                    'No smoking, alcohol, or intoxicating substances permitted on premises',
+                    'Adhere to reserved check-in and checkout timings'
+                  ]
+              ).map((rule, idx) => (
                 <div key={idx} className="py-2.5 first:pt-0 last:pb-0 flex items-start gap-2.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-slate-400 mt-1.5 flex-shrink-0" />
                   <span>{rule}</span>

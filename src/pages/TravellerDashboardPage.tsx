@@ -299,6 +299,16 @@ export const TravellerDashboardPage: React.FC<TravellerDashboardPageProps> = ({
                           </p>
                         </div>
                       </div>
+
+                      <div className="bg-teal-50/80 border border-teal-200/80 rounded-xl p-3 flex items-start gap-2 text-xs text-teal-950">
+                        <ShieldCheck className="w-4 h-4 text-teal-600 flex-shrink-0 mt-0.5" />
+                        <div className="space-y-0.5">
+                          <p className="font-bold text-teal-900">In-Person Physical ID Verification Reminder</p>
+                          <p className="text-[11px] leading-relaxed text-teal-800">
+                            Please carry a valid physical government-issued photo ID (Aadhaar, Voter ID, Passport, or Driving License) to present directly to the host upon check-in. To safeguard privacy, no ID photos or numbers are collected online.
+                          </p>
+                        </div>
+                      </div>
                     </div>
                   )}
 

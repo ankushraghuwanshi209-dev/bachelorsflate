@@ -62,6 +62,11 @@ function rowToBooking(row: Record<string, any>, privateDetails?: BookingPrivateD
     message: row.message || undefined,
     status: row.status as BookingStatus,
     totalPrice: Number(row.total_price),
+    termsAgreed: Boolean(row.terms_agreed ?? true),
+    termsAgreedAt: row.terms_agreed_at || undefined,
+    termsVersion: row.terms_version || undefined,
+    rulesAgreed: Boolean(row.rules_agreed ?? true),
+    idVerificationAgreed: Boolean(row.id_verification_agreed ?? true),
     createdAt: row.created_at || new Date().toISOString(),
     updatedAt: row.updated_at || new Date().toISOString(),
     privateDetails,
@@ -141,7 +146,17 @@ export async function createBooking(
 
   const room = await getRoomById(requestData.roomId);
   if (room && requestData.guestCount > room.candidateAllowance) {
-    throw new Error(`This room allows a maximum of ${room.candidateAllowance} ${room.candidateAllowance === 1 ? 'candidate' : 'candidates'}.`);
+    throw new Error(
+      `This booking request exceeds the host's candidate allowance (${room.candidateAllowance} ${
+        room.candidateAllowance === 1 ? 'candidate' : 'candidates'
+      } maximum).`
+    );
+  }
+
+  if (!requestData.termsAgreed || !requestData.rulesAgreed || !requestData.idVerificationAgreed) {
+    throw new Error(
+      'You must accept all required guest terms, host rules, conduct standards, and in-person ID verification before submitting a booking request.'
+    );
   }
 
   const conflict = await checkBookingConflict(
@@ -166,13 +181,18 @@ export async function createBooking(
     travellerEmail: traveller?.email || requestData.travellerEmail,
     travellerPhone: requestData.travellerPhone || traveller?.phoneNumber || '',
     status: 'pending',
+    termsAgreed: true,
+    termsAgreedAt: requestData.termsAgreedAt || now,
+    termsVersion: requestData.termsVersion || '2026-10-v1',
+    rulesAgreed: true,
+    idVerificationAgreed: true,
     createdAt: now,
     updatedAt: now,
   };
 
   if (isSupabaseConfigured && supabase) {
     try {
-      const row = {
+      const row: Record<string, any> = {
         id: bookingId,
         room_id: newBooking.roomId,
         room_title: newBooking.roomTitle,
@@ -193,11 +213,28 @@ export async function createBooking(
         message: newBooking.message || null,
         status: 'pending',
         total_price: newBooking.totalPrice,
+        terms_agreed: true,
+        terms_agreed_at: newBooking.termsAgreedAt,
+        terms_version: newBooking.termsVersion,
+        rules_agreed: true,
+        id_verification_agreed: true,
         created_at: now,
         updated_at: now,
       };
 
-      const { error } = await supabase.from('bookings').insert(row);
+      let { error } = await supabase.from('bookings').insert(row);
+      if (error && error.message?.includes('terms_agreed')) {
+        const {
+          terms_agreed,
+          terms_agreed_at,
+          terms_version,
+          rules_agreed,
+          id_verification_agreed,
+          ...fallbackRow
+        } = row;
+        const retry = await supabase.from('bookings').insert(fallbackRow);
+        error = retry.error;
+      }
       if (error) {
         console.warn('Supabase booking insert failed, saving locally:', error);
       }
