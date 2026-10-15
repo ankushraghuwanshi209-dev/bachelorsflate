@@ -7,6 +7,7 @@ export function sanitizePublicRoom(room: RoomListing): RoomListing {
   const { privateDetails: _privateDetails, ...publicRoom } = room;
   return {
     ...publicRoom,
+    candidateAllowance: Number(room.candidateAllowance) || 1,
     approxLocation: '',
     nearbyLandmark: '',
   };
@@ -17,6 +18,7 @@ function normalizeLocalRoom(room: RoomListing): RoomListing {
   const { exactAddress, checkInInstructions, hostPhone, ...publicRoom } = legacyRoom;
   return {
     ...publicRoom,
+    candidateAllowance: Number(room.candidateAllowance) || 1,
     privateDetails: room.privateDetails || {
       exactAddress: exactAddress || '',
       checkInInstructions: checkInInstructions || '',
@@ -41,6 +43,7 @@ function rowToRoom(
     description: row.description || '',
     city: row.city,
     neighbourhood: row.neighbourhood,
+    candidateAllowance: Number(row.candidate_allowance) || 1,
     approxLocation: row.approx_location,
     amenities: row.amenities || [],
     bathroomType: row.bathroom_type || 'attached',
@@ -292,6 +295,10 @@ export async function createRoom(
   data: Omit<RoomListing, 'id' | 'hostId' | 'hostRating' | 'reviewCount' | 'createdAt' | 'updatedAt'>,
   host?: UserProfile
 ): Promise<RoomListing> {
+  if (!Number.isInteger(data.candidateAllowance) || data.candidateAllowance <= 0) {
+    throw new Error('Candidate allowance must be a positive whole number.');
+  }
+
   const currentHost =
     host ||
     (() => {
@@ -337,6 +344,7 @@ export async function createRoom(
         description: newRoom.description,
         city: newRoom.city,
         neighbourhood: newRoom.neighbourhood,
+        candidate_allowance: newRoom.candidateAllowance,
         approx_location: newRoom.approxLocation,
         amenities: newRoom.amenities,
         bathroom_type: newRoom.bathroomType,
@@ -386,6 +394,13 @@ export async function updateRoom(
   updates: Partial<RoomListing>,
   hostUid?: string
 ): Promise<RoomListing> {
+  if (
+    updates.candidateAllowance !== undefined &&
+    (!Number.isInteger(updates.candidateAllowance) || updates.candidateAllowance <= 0)
+  ) {
+    throw new Error('Candidate allowance must be a positive whole number.');
+  }
+
   const now = new Date().toISOString();
 
   if (isSupabaseConfigured && supabase) {
@@ -398,6 +413,7 @@ export async function updateRoom(
       if (updates.description !== undefined) roomRowUpdates.description = updates.description;
       if (updates.city !== undefined) roomRowUpdates.city = updates.city;
       if (updates.neighbourhood !== undefined) roomRowUpdates.neighbourhood = updates.neighbourhood;
+      if (updates.candidateAllowance !== undefined) roomRowUpdates.candidate_allowance = updates.candidateAllowance;
       if (updates.approxLocation !== undefined) roomRowUpdates.approx_location = updates.approxLocation;
       if (updates.amenities !== undefined) roomRowUpdates.amenities = updates.amenities;
       if (updates.bathroomType !== undefined) roomRowUpdates.bathroom_type = updates.bathroomType;

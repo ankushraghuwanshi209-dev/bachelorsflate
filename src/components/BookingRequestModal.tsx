@@ -91,6 +91,10 @@ export const BookingRequestModal: React.FC<BookingRequestModalProps> = ({
       error('Please provide a phone number for the host to coordinate your arrival.');
       return;
     }
+    if (guestCount > room.candidateAllowance) {
+      error(`This room allows a maximum of ${room.candidateAllowance} ${room.candidateAllowance === 1 ? 'candidate' : 'candidates'}.`);
+      return;
+    }
     setStep('review');
   };
 
@@ -209,7 +213,7 @@ export const BookingRequestModal: React.FC<BookingRequestModalProps> = ({
                   className="w-full text-xs font-medium px-3 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500"
                 >
                   <option value={1}>1 Guest (Aspirant / Solo)</option>
-                  <option value={2}>2 Guests</option>
+                  {room.candidateAllowance >= 2 && <option value={2}>2 Guests</option>}
                 </select>
               </div>
 

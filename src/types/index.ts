@@ -53,6 +53,7 @@ export interface RoomListing {
   description: string;
   city: string;
   neighbourhood: string;
+  candidateAllowance: number;
   approxLocation: string; // PUBLIC: e.g., "Near Central Metro, Within 400m of City Centre"
   privateDetails?: RoomPrivateDetails;
   amenities: string[];

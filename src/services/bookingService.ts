@@ -135,6 +135,15 @@ export async function createBooking(
   requestData: Omit<BookingRequest, 'id' | 'status' | 'createdAt' | 'updatedAt'>,
   traveller?: UserProfile
 ): Promise<BookingRequest> {
+  if (!Number.isInteger(requestData.guestCount) || requestData.guestCount <= 0) {
+    throw new Error('Guest count must be a positive whole number.');
+  }
+
+  const room = await getRoomById(requestData.roomId);
+  if (room && requestData.guestCount > room.candidateAllowance) {
+    throw new Error(`This room allows a maximum of ${room.candidateAllowance} ${room.candidateAllowance === 1 ? 'candidate' : 'candidates'}.`);
+  }
+
   const conflict = await checkBookingConflict(
     requestData.roomId,
     requestData.date,

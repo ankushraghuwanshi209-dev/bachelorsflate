@@ -176,6 +176,10 @@ export const RoomDetailsPage: React.FC<RoomDetailsPageProps> = ({
           <span className="bg-teal-50 text-teal-800 text-[11px] font-bold px-2.5 py-0.5 rounded-full border border-teal-200">
             {room.bathroomType === 'attached' ? 'Attached Bathroom' : 'Clean Bathroom Access'}
           </span>
+          <span className="bg-slate-100 text-slate-700 text-[11px] font-medium px-2.5 py-0.5 rounded-full flex items-center gap-1">
+            <Users className="w-3 h-3 text-brand-600" />
+            Up to {room.candidateAllowance} {room.candidateAllowance === 1 ? 'candidate' : 'candidates'}
+          </span>
         </div>
 
         <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 tracking-tight leading-snug">

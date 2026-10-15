@@ -43,6 +43,7 @@ CREATE TABLE IF NOT EXISTS public.rooms (
   description TEXT,
   city TEXT NOT NULL,
   neighbourhood TEXT NOT NULL,
+  candidate_allowance INTEGER NOT NULL DEFAULT 1 CHECK (candidate_allowance > 0),
   approx_location TEXT NOT NULL,
   amenities TEXT[] DEFAULT ARRAY[]::TEXT[],
   bathroom_type TEXT DEFAULT 'attached',
@@ -58,6 +59,9 @@ CREATE TABLE IF NOT EXISTS public.rooms (
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+ALTER TABLE public.rooms
+  ADD COLUMN IF NOT EXISTS candidate_allowance INTEGER NOT NULL DEFAULT 1 CHECK (candidate_allowance > 0);
 
 -- 5. Create room_private table (Host only: Exact address & check-in details)
 CREATE TABLE IF NOT EXISTS public.room_private (

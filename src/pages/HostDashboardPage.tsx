@@ -71,6 +71,7 @@ export const HostDashboardPage: React.FC<HostDashboardPageProps> = ({
   const [description, setDescription] = useState('');
   const [city, setCity] = useState('New Delhi');
   const [neighbourhood, setNeighbourhood] = useState('');
+  const [candidateAllowance, setCandidateAllowance] = useState('');
   const [exactAddress, setExactAddress] = useState('');
   const [checkInInstructions, setCheckInInstructions] = useState('');
   const [bathroomType, setBathroomType] = useState<BathroomType>('attached');
@@ -126,6 +127,7 @@ export const HostDashboardPage: React.FC<HostDashboardPageProps> = ({
     setDescription('');
     setCity('New Delhi');
     setNeighbourhood('');
+    setCandidateAllowance('');
     setExactAddress('');
     setCheckInInstructions('Welcome! Ring bell upon arrival.');
     setBathroomType('attached');
@@ -154,6 +156,7 @@ export const HostDashboardPage: React.FC<HostDashboardPageProps> = ({
     setDescription(room.description);
     setCity(room.city);
     setNeighbourhood(room.neighbourhood);
+    setCandidateAllowance(String(room.candidateAllowance || 1));
     setExactAddress(room.privateDetails?.exactAddress || '');
     setCheckInInstructions(room.privateDetails?.checkInInstructions || '');
     setBathroomType(room.bathroomType);
@@ -219,6 +222,11 @@ export const HostDashboardPage: React.FC<HostDashboardPageProps> = ({
       error('Please fill in the required title, city, area/neighbourhood, and exact address fields.');
       return;
     }
+    const parsedCandidateAllowance = Number(candidateAllowance);
+    if (!candidateAllowance.trim() || !Number.isInteger(parsedCandidateAllowance) || parsedCandidateAllowance <= 0) {
+      error('Please enter a positive whole number for the candidate allowance.');
+      return;
+    }
     const parsedPrice = Number(price2to3);
     if (!price2to3.trim() || !Number.isFinite(parsedPrice) || parsedPrice <= 0) {
       error('Please enter a valid positive price for the 2–3 hours rate.');
@@ -245,6 +253,7 @@ export const HostDashboardPage: React.FC<HostDashboardPageProps> = ({
         description: description.trim(),
         city: city.trim(),
         neighbourhood: neighbourhood.trim(),
+        candidateAllowance: parsedCandidateAllowance,
         approxLocation: '',
         nearbyLandmark: '',
         privateDetails: {
@@ -755,6 +764,26 @@ export const HostDashboardPage: React.FC<HostDashboardPageProps> = ({
               />
             </div>
 
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-slate-700 mb-1">
+              Candidate Allowance *
+            </label>
+            <input
+              type="number"
+              required
+              min={1}
+              step={1}
+              placeholder="Enter maximum candidates"
+              value={candidateAllowance}
+              onChange={(e) => setCandidateAllowance(e.target.value)}
+              onInvalid={() => error('Please enter a positive whole number for the candidate allowance.')}
+              className="w-full text-xs font-medium px-3 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500"
+            />
+            <p className="text-[10px] text-slate-400 mt-0.5">
+              Maximum number of candidates allowed in the room at one time.
+            </p>
           </div>
 
           {/* Strictly Private Fields */}
