@@ -87,7 +87,7 @@ export const HostDashboardPage: React.FC<HostDashboardPageProps> = ({
   const [availableTimes, setAvailableTimes] = useState('07:00 AM - 10:00 PM');
   const [minStayHours, setMinStayHours] = useState(2);
   const [maxStayHours, setMaxStayHours] = useState(24);
-  const [price2to3, setPrice2to3] = useState(399);
+  const [price2to3, setPrice2to3] = useState('');
   const [roomStatus, setRoomStatus] = useState<RoomStatus>('active');
 
   // Photo uploads
@@ -140,7 +140,7 @@ export const HostDashboardPage: React.FC<HostDashboardPageProps> = ({
       'Quiet study atmosphere\nNo smoking or alcohol on premises\nValid photo ID required at check-in'
     );
     setAvailableTimes('07:00 AM - 10:00 PM');
-    setPrice2to3(399);
+    setPrice2to3('');
     setRoomStatus('active');
     setPhotos([
       'https://images.unsplash.com/photo-1598928506311-c55ded91a20c?auto=format&fit=crop&w=1000&q=80'
@@ -162,7 +162,7 @@ export const HostDashboardPage: React.FC<HostDashboardPageProps> = ({
     setAvailableTimes(room.availableTimes);
     setMinStayHours(room.minStayHours);
     setMaxStayHours(room.maxStayHours);
-    setPrice2to3(room.pricing.twoToThreeHours);
+    setPrice2to3(String(room.pricing.twoToThreeHours));
     setRoomStatus(room.status);
     setPhotos(room.photos || []);
     setActiveTab('form');
@@ -219,6 +219,11 @@ export const HostDashboardPage: React.FC<HostDashboardPageProps> = ({
       error('Please fill in the required title, city, area/neighbourhood, and exact address fields.');
       return;
     }
+    const parsedPrice = Number(price2to3);
+    if (!price2to3.trim() || !Number.isFinite(parsedPrice) || parsedPrice <= 0) {
+      error('Please enter a valid positive price for the 2–3 hours rate.');
+      return;
+    }
     if (photos.length === 0) {
       error('Please provide at least one photo of the room.');
       return;
@@ -251,8 +256,8 @@ export const HostDashboardPage: React.FC<HostDashboardPageProps> = ({
         amenities: selectedAmenities,
         houseRules,
         pricing: {
-          hourly: Math.round(price2to3 / 2),
-          twoToThreeHours: Number(price2to3),
+          hourly: Math.round(parsedPrice / 2),
+          twoToThreeHours: parsedPrice,
         },
         minStayHours: Number(minStayHours),
         maxStayHours: Number(maxStayHours),
@@ -788,10 +793,12 @@ export const HostDashboardPage: React.FC<HostDashboardPageProps> = ({
                 <input
                   type="number"
                   required
-                  min={100}
-                  step={10}
+                  min={0.01}
+                  step="any"
+                  placeholder="Enter price"
                   value={price2to3}
-                  onChange={(e) => setPrice2to3(Number(e.target.value))}
+                  onChange={(e) => setPrice2to3(e.target.value)}
+                  onInvalid={() => error('Please enter a valid positive price for the 2–3 hours rate.')}
                   className="w-full text-xs font-bold px-3 py-2.5 rounded-xl border border-slate-200"
                 />
               </div>
