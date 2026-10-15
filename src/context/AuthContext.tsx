@@ -29,21 +29,51 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const ACTIVE_ROLE_KEY = 'bachelors_flat_active_role';
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<UserProfile | null>(() => getLocalSessionUser());
   const [loading, setLoading] = useState<boolean>(true);
-  const [activeRole, setActiveRole] = useState<UserRole>('traveller');
+  const [activeRole, setActiveRoleState] = useState<UserRole>(() => {
+    try {
+      const saved = localStorage.getItem(ACTIVE_ROLE_KEY);
+      if (saved === 'host' || saved === 'traveller') return saved;
+      const initialUser = getLocalSessionUser();
+      if (initialUser?.roles.includes('host') && !initialUser.roles.includes('traveller')) {
+        return 'host';
+      }
+    } catch {}
+    return 'traveller';
+  });
 
-  // Sync activeRole whenever user changes
+  const setActiveRole = (role: UserRole) => {
+    setActiveRoleState(role);
+    try {
+      localStorage.setItem(ACTIVE_ROLE_KEY, role);
+    } catch {}
+    if (user && !user.roles.includes(role)) {
+      const updatedRoles = [...user.roles, role];
+      const updatedUser: UserProfile = { ...user, roles: updatedRoles };
+      setUser(updatedUser);
+      try {
+        localStorage.setItem('bachelors_flat_current_user', JSON.stringify(updatedUser));
+      } catch {}
+      updateUserProfile(user.uid, { roles: updatedRoles }).catch(() => {});
+    }
+  };
+
+  // Sync activeRole if user only has one single role
   useEffect(() => {
     if (user) {
       if (user.roles.includes('host') && !user.roles.includes('traveller')) {
-        setActiveRole('host');
+        setActiveRoleState('host');
+        try { localStorage.setItem(ACTIVE_ROLE_KEY, 'host'); } catch {}
       } else if (user.roles.includes('traveller') && !user.roles.includes('host')) {
-        setActiveRole('traveller');
+        setActiveRoleState('traveller');
+        try { localStorage.setItem(ACTIVE_ROLE_KEY, 'traveller'); } catch {}
       }
     }
-  }, [user]);
+  }, [user?.roles]);
 
   useEffect(() => {
     const unsubscribe = subscribeToAuthChanges((profile) => {

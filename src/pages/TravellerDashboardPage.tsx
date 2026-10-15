@@ -14,8 +14,7 @@ import {
   RotateCcw,
   Navigation,
   Copy,
-  Info,
-  Sparkles
+  Info
 } from 'lucide-react';
 import type { BookingRequest, BookingStatus } from '../types';
 import { getTravellerBookings, updateBookingStatus } from '../services/bookingService';

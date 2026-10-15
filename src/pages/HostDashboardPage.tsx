@@ -54,7 +54,7 @@ export const HostDashboardPage: React.FC<HostDashboardPageProps> = ({
   onNavigateToRoom,
   onNavigate,
 }) => {
-  const { user, activeRole } = useAuth();
+  const { user } = useAuth();
   const { success, error, info } = useToast();
 
   const [activeTab, setActiveTab] = useState<'listings' | 'requests' | 'form'>(
@@ -335,31 +335,6 @@ export const HostDashboardPage: React.FC<HostDashboardPageProps> = ({
   };
 
   const pendingRequestsCount = requests.filter((r) => r.status === 'pending').length;
-
-  // If user is currently in Traveller mode, guard host options and show mode switch prompt
-  if (user && activeRole === 'traveller') {
-    return (
-      <div className="max-w-2xl mx-auto px-4 py-16 text-center space-y-6">
-        <div className="w-16 h-16 rounded-3xl bg-purple-50 text-purple-700 border border-purple-200 flex items-center justify-center mx-auto shadow-sm">
-          <Layers className="w-8 h-8" />
-        </div>
-        <div className="space-y-2">
-          <h2 className="text-2xl font-extrabold text-slate-900">Aap abhi Traveller Mode me hain</h2>
-          <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
-            "Add Room" aur room listing options sirf <strong>Host Mode</strong> me available hain. Host Mode activate karne ke liye Home par jaakar mode switch use karein.
-          </p>
-        </div>
-        <div className="flex justify-center pt-2">
-          <button
-            onClick={() => onNavigate?.('traveller-dashboard')}
-            className="w-full sm:w-auto px-6 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition-all"
-          >
-            Go to Traveller Bookings
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">

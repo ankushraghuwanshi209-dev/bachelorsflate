@@ -28,25 +28,18 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
 
-  const handleRoleToggle = async () => {
-    if (!user) return;
-    const hasBoth = user.roles.includes('traveller') && user.roles.includes('host');
-
-    if (hasBoth) {
-      const nextRole = activeRole === 'traveller' ? 'host' : 'traveller';
-      setActiveRole(nextRole);
-      success(`Switched mode to ${nextRole === 'host' ? 'Host' : 'Traveller'}`);
-      if (nextRole === 'host') {
-        onNavigate('host-dashboard');
-      } else {
-        onNavigate('traveller-dashboard');
-      }
-    } else if (user.roles.includes('traveller')) {
-      // Add host role to account
-      await updateProfile({ roles: ['traveller', 'host'] });
-      setActiveRole('host');
-      success('Host privileges activated! You can now list rooms.');
-      onNavigate('host-dashboard');
+  const handleRoleToggle = () => {
+    if (!user) {
+      handleNav('login');
+      return;
+    }
+    const nextRole = activeRole === 'traveller' ? 'host' : 'traveller';
+    setActiveRole(nextRole);
+    success(`Switched mode to ${nextRole === 'host' ? 'Host' : 'Traveller'}`);
+    if (nextRole === 'host') {
+      handleNav('host-dashboard');
+    } else {
+      handleNav('traveller-dashboard');
     }
   };
 
@@ -63,9 +56,6 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate }) => {
     success('Logged out successfully.');
     onNavigate('home');
   };
-
-  const hasBothRoles = user?.roles.includes('traveller') && user?.roles.includes('host');
-  const isDashboard = currentView === 'host-dashboard' || currentView === 'traveller-dashboard';
 
   return (
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 transition-all">
@@ -118,20 +108,20 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate }) => {
               Safety & Trust
             </button>
 
-            {/* Quick role toggle pill if logged in */}
-            {user && !isDashboard && (
+            {/* Quick role toggle pill if logged in - ALWAYS accessible and working */}
+            {user && (
               <button
                 onClick={handleRoleToggle}
-                className={`ml-2 px-3 py-1.5 rounded-full text-xs font-semibold border flex items-center gap-1.5 transition-all ${
+                className={`ml-2 px-3 py-1.5 rounded-full text-xs font-semibold border flex items-center gap-1.5 transition-all shadow-sm active:scale-95 cursor-pointer ${
                   activeRole === 'host'
                     ? 'bg-purple-50 text-purple-800 border-purple-200 hover:bg-purple-100'
                     : 'bg-teal-50 text-teal-800 border-teal-200 hover:bg-teal-100'
                 }`}
-                title="Switch between Traveller and Host mode"
+                title="Click to switch between Traveller and Host mode"
               >
                 <ArrowRightLeft className="w-3.5 h-3.5" />
                 <span>Mode: <strong className="capitalize">{activeRole}</strong></span>
-                {hasBothRoles && <span className="text-[10px] opacity-75">(Switch)</span>}
+                <span className="text-[10px] opacity-75 font-bold underline">(Switch)</span>
               </button>
             )}
           </nav>
@@ -196,22 +186,31 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate }) => {
                     </button>
 
                     {activeRole === 'host' ? (
+                      <>
+                        <button
+                          onClick={() => handleNav('host-dashboard')}
+                          className="w-full text-left px-4 py-2 hover:bg-purple-50 text-purple-700 flex items-center gap-2 text-xs font-semibold"
+                        >
+                          <Layers className="w-4 h-4 text-purple-600" />
+                          Host Dashboard & Listings
+                        </button>
+                        <button
+                          onClick={handleRoleToggle}
+                          className="w-full text-left px-4 py-2 hover:bg-teal-50 text-teal-700 flex items-center gap-2 text-xs font-medium"
+                        >
+                          <ArrowRightLeft className="w-4 h-4 text-teal-600" />
+                          Switch to Traveller Mode
+                        </button>
+                      </>
+                    ) : (
                       <button
-                        onClick={() => handleNav('host-dashboard')}
+                        onClick={handleRoleToggle}
                         className="w-full text-left px-4 py-2 hover:bg-purple-50 text-purple-700 flex items-center gap-2 text-xs font-semibold"
                       >
                         <Layers className="w-4 h-4 text-purple-600" />
-                        Host Dashboard & Listings
-                      </button>
-                      ) : !isDashboard ? (
-                      <button
-                        onClick={handleRoleToggle}
-                        className="w-full text-left px-4 py-2 hover:bg-slate-50 flex items-center gap-2 text-xs font-medium text-slate-600"
-                      >
-                        <Layers className="w-4 h-4 text-slate-400" />
                         Switch to Host Mode
                       </button>
-                      ) : null}
+                    )}
 
                     <button
                       onClick={() => handleNav('profile')}
@@ -260,14 +259,19 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate }) => {
               >
                 Log In
               </button>
-            ) : user && !isDashboard ? (
+            ) : (
               <button
                 onClick={handleRoleToggle}
-                className="px-2.5 py-1 rounded-full text-[11px] font-bold border bg-teal-50 text-teal-800 border-teal-200"
+                className={`px-2.5 py-1 rounded-full text-[11px] font-bold border shadow-sm ${
+                  activeRole === 'host'
+                    ? 'bg-purple-50 text-purple-800 border-purple-200'
+                    : 'bg-teal-50 text-teal-800 border-teal-200'
+                }`}
+                title="Click to toggle mode"
               >
-                {activeRole === 'host' ? 'Host' : 'Traveller'}
+                {activeRole === 'host' ? 'Host' : 'Traveller'} (Switch)
               </button>
-            ) : null}
+            )}
 
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -294,14 +298,12 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate }) => {
                 <p className="font-bold text-slate-900 text-sm truncate">{user.displayName}</p>
                 <p className="text-xs text-slate-500 truncate">{user.email}</p>
               </div>
-              {!isDashboard && (
-                <button
-                  onClick={handleRoleToggle}
-                  className="text-[11px] font-bold px-2 py-1 bg-white border border-slate-200 rounded-lg text-slate-700 shadow-sm"
-                >
-                  Switch Role
-                </button>
-              )}
+              <button
+                onClick={handleRoleToggle}
+                className="text-[11px] font-bold px-2 py-1 bg-white border border-slate-200 rounded-lg text-slate-700 shadow-sm"
+              >
+                Switch to {activeRole === 'host' ? 'Traveller' : 'Host'}
+              </button>
             </div>
           )}
 
@@ -340,22 +342,31 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate }) => {
               </button>
 
               {activeRole === 'host' ? (
+                <>
+                  <button
+                    onClick={() => handleNav('host-dashboard')}
+                    className="w-full text-left px-3 py-2.5 rounded-lg text-sm font-semibold text-purple-700 hover:bg-purple-50 flex items-center gap-2.5"
+                  >
+                    <Layers className="w-4 h-4 text-purple-600" />
+                    Host Dashboard & Rooms
+                  </button>
+                  <button
+                    onClick={handleRoleToggle}
+                    className="w-full text-left px-3 py-2.5 rounded-lg text-sm font-semibold text-teal-700 hover:bg-teal-50 flex items-center gap-2.5"
+                  >
+                    <ArrowRightLeft className="w-4 h-4 text-teal-600" />
+                    Switch to Traveller Mode
+                  </button>
+                </>
+              ) : (
                 <button
-                  onClick={() => handleNav('host-dashboard')}
+                  onClick={handleRoleToggle}
                   className="w-full text-left px-3 py-2.5 rounded-lg text-sm font-semibold text-purple-700 hover:bg-purple-50 flex items-center gap-2.5"
                 >
                   <Layers className="w-4 h-4 text-purple-600" />
-                  Host Dashboard & Rooms
-                </button>
-              ) : !isDashboard ? (
-                <button
-                  onClick={handleRoleToggle}
-                  className="w-full text-left px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-2.5"
-                >
-                  <Layers className="w-4 h-4 text-slate-500" />
                   Switch to Host Mode
                 </button>
-              ) : null}
+              )}
 
               <button
                 onClick={() => handleNav('profile')}
