@@ -57,6 +57,8 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate }) => {
     onNavigate('home');
   };
 
+  const isDashboard = currentView === 'host-dashboard' || currentView === 'traveller-dashboard';
+
   return (
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 transition-all">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -109,7 +111,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate }) => {
             </button>
 
             {/* Quick role toggle pill if logged in - ALWAYS accessible and working */}
-            {user && (
+            {user && !isDashboard && (
               <button
                 onClick={handleRoleToggle}
                 className={`ml-2 px-3 py-1.5 rounded-full text-xs font-semibold border flex items-center gap-1.5 transition-all shadow-sm active:scale-95 cursor-pointer ${
@@ -259,7 +261,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate }) => {
               >
                 Log In
               </button>
-            ) : (
+            ) : !isDashboard ? (
               <button
                 onClick={handleRoleToggle}
                 className={`px-2.5 py-1 rounded-full text-[11px] font-bold border shadow-sm ${
@@ -271,7 +273,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate }) => {
               >
                 {activeRole === 'host' ? 'Host' : 'Traveller'} (Switch)
               </button>
-            )}
+            ) : null}
 
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
